@@ -89,6 +89,7 @@ ift:	$(ALL) x-load.bin.ift
 x-load.bin.ift: signGP System.map x-load.bin
 	TEXT_BASE=`grep -w _start System.map|cut -d ' ' -f1`
 	./signGP x-load.bin $(TEXT_BASE)
+	cp x-load.bin.ift MLO
  
 x-load.bin:	x-load
 		$(OBJCOPY) ${OBJCFLAGS} -O binary $< $@
@@ -185,7 +186,7 @@ clobber:	clean
 		| xargs rm -f
 	rm -f $(OBJS) *.bak tags TAGS
 	rm -fr *.*~
-	rm -f x-load x-load.map $(ALL) x-load.bin.ift signGP
+	rm -f x-load x-load.map $(ALL) x-load.bin.ift signGP MLO
 	rm -f include/asm/proc include/asm/arch
 
 mrproper \
