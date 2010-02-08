@@ -70,6 +70,7 @@ LIBS += lib/lib$(ARCH).a
 LIBS += fs/fat/libfat.a
 LIBS += disk/libdisk.a
 LIBS += drivers/libdrivers.a
+LIBS += common/libcommon.a
 .PHONY : $(LIBS)
 
 # Add GCC lib
@@ -153,7 +154,6 @@ overo_config :	unconfig
 	@./mkconfig $(@:_config=) arm omap3 overo
 
 omap3530beagle_config :    unconfig
-
 	@./mkconfig $(@:_config=) arm omap3 omap3530beagle
 
 #########################################################################

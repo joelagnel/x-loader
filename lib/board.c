@@ -36,15 +36,15 @@
 #include <asm/arch/mem.h>
 
 const char version_string[] =
-	"Texas Instruments X-Loader 1.4.2 (" __DATE__ " - " __TIME__ ")";
+	"Texas Instruments X-Loader 1.4.3 (" __DATE__ " - " __TIME__ ")";
 
-#ifdef CFG_PRINTF
 int print_info(void)
 {
+#ifdef CFG_PRINTF
         printf("\n\n%s\n", version_string);
+#endif
 	return 0;
 }
-#endif
 
 static int init_func_i2c (void)
 {
@@ -59,10 +59,10 @@ typedef int (init_fnc_t) (void);
 init_fnc_t *init_sequence[] = {
 	cpu_init,		/* basic cpu dependent setup */
 	board_init,		/* basic board dependent setup */
-#ifdef CFG_PRINTF
+#ifdef CFG_NS16550_SERIAL
  	serial_init,		/* serial communications setup */
-	print_info,
 #endif
+	print_info,
   	nand_init,		/* board specific nand init */
 #ifdef CONFIG_MMC
 	init_func_i2c,
@@ -75,6 +75,7 @@ void start_armboot (void)
   	init_fnc_t **init_fnc_ptr;
  	int i, size;
 	uchar *buf;
+	int *first_instruction;
 	block_dev_desc_t *dev_desc = NULL;
 
    	for (init_fnc_ptr = init_sequence; *init_fnc_ptr; ++init_fnc_ptr) {
@@ -124,6 +125,13 @@ void start_armboot (void)
 
 	if (buf == (uchar *)CFG_LOADADDR)
 		hang();
+
+	/* if nand/onenand read result is just erased data then serial boot */
+	first_instruction = (int *)CFG_LOADADDR;
+	if(*first_instruction == 0xffffffff) {
+		printf("Blank nand/onenand contents, attempting serial boot . . .\n");
+		do_load_serial_bin(CFG_LOADADDR, 115200);
+	}
 
 	/* go run U-Boot and never return */
  	((init_fnc_t *)CFG_LOADADDR)();
