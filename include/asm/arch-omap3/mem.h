@@ -43,8 +43,9 @@ typedef enum {
 #define GPMC_NAND           1
 #define GPMC_MDOC           2
 #define GPMC_ONENAND        3
-#define MMC_NAND			4
-#define MMC_ONENAND			5
+#define MMC_NAND            4
+#define MMC_ONENAND         5
+#define GPMC_NONE           6
 
 #endif
 
