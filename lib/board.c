@@ -36,7 +36,7 @@
 #include <asm/arch/mem.h>
 
 const char version_string[] =
-	"Texas Instruments X-Loader 1.4.3 (" __DATE__ " - " __TIME__ ")";
+	"Texas Instruments X-Loader 1.4.4ss (" __DATE__ " - " __TIME__ ")";
 
 int print_info(void)
 {
@@ -122,14 +122,13 @@ void start_armboot (void)
 		}
 	}
 
-
-	if (buf == (uchar *)CFG_LOADADDR)
-		hang();
-
-	/* if nand/onenand read result is just erased data then serial boot */
+	/* if u-boot not found on mmc or
+         * nand read result is erased data
+         * then serial boot 
+         */
 	first_instruction = (int *)CFG_LOADADDR;
-	if(*first_instruction == 0xffffffff) {
-		printf("Blank nand/onenand contents, attempting serial boot . . .\n");
+	if((buf == (uchar *)CFG_LOADADDR) || (*first_instruction == 0xffffffff)) {
+		printf("u-boot.bin not found or blank nand contents - attempting serial boot . . .\n");
 		do_load_serial_bin(CFG_LOADADDR, 115200);
 	}
 
@@ -144,7 +143,7 @@ void hang (void)
 	/* call board specific hang function */
 	board_hang();
 
-	/* if board_hang() returns, hange here */
+	/* if board_hang() returns, hang here */
 #ifdef CFG_PRINTF
 	printf("X-Loader hangs\n");
 #endif
