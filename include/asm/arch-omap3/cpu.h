@@ -210,6 +210,8 @@
 #define PRM_RSTCTRL          0x48307250
 #define PRM_CLKSRC_CTRL      0x48307270
 
+#define SYSCLKDIV_2		(0x1 << 7)
+
 /* SMX-APE */
 #define PM_RT_APE_BASE_ADDR_ARM		(SMX_APE_BASE + 0x10000)
 #define PM_GPMC_BASE_ADDR_ARM		(SMX_APE_BASE + 0x12400)

@@ -30,10 +30,22 @@
 #include <asm/arch/cpu.h>
 #include <asm/arch/bits.h>
 #include <asm/arch/mux.h>
+#include <asm/arch/gpio.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/sys_info.h>
 #include <asm/arch/clocks.h>
 #include <asm/arch/mem.h>
+
+/* params for XM */
+#define CORE_DPLL_PARAM_M2	0x09
+#define CORE_DPLL_PARAM_M	0x360
+#define CORE_DPLL_PARAM_N	0xC
+
+/* BeagleBoard revisions */
+#define REVISION_AXBX		0x7
+#define REVISION_CX		0x6
+#define REVISION_C4		0x5
+#define REVISION_XM		0x0
 
 /* Used to index into DPLL parameter tables */
 struct dpll_param {
@@ -105,6 +117,10 @@ u32 get_sysboot_value(void)
  *************************************************************/
 u32 get_mem_type(void)
 {
+	
+	if (beagle_revision() == REVISION_XM)
+		return GPMC_NONE;
+
 	u32   mem_type = get_sysboot_value();
 	switch (mem_type) {
 	case 0:
@@ -186,6 +202,38 @@ u32 cpu_is_3410(void)
 	}
 }
 
+/******************************************
+ * beagle_identify
+ * Description: Detect if we are running on a Beagle revision Ax/Bx,
+ *		C1/2/3, C4 or D. This can be done by reading
+ *		the level of GPIO173, GPIO172 and GPIO171. This should
+ *		result in
+ *		GPIO173, GPIO172, GPIO171: 1 1 1 => Ax/Bx
+ *		GPIO173, GPIO172, GPIO171: 1 1 0 => C1/2/3
+ *		GPIO173, GPIO172, GPIO171: 1 0 1 => C4
+ *		GPIO173, GPIO172, GPIO171: 0 0 0 => XM
+ ******************************************/
+int beagle_revision(void)
+{
+	int rev;
+
+	omap_request_gpio(171);
+	omap_request_gpio(172);
+	omap_request_gpio(173);
+	omap_set_gpio_direction(171, 1);
+	omap_set_gpio_direction(172, 1);
+	omap_set_gpio_direction(173, 1);
+
+	rev = omap_get_gpio_datain(173) << 2 |
+		omap_get_gpio_datain(172) << 1 |
+		omap_get_gpio_datain(171);
+	omap_free_gpio(171);
+	omap_free_gpio(172);
+	omap_free_gpio(173);
+
+	return rev;
+}
+
 /*****************************************************************
  * sr32 - clear & set a value in a bit range for a 32 bit address
  *****************************************************************/
@@ -230,31 +278,48 @@ void config_3430sdram_ddr(void)
 	/* setup sdrc to ball mux */
 	__raw_writel(SDP_SDRC_SHARING, SDRC_SHARING);
 
-	/* set mdcfg */
-	__raw_writel(SDP_SDRC_MDCFG_0_DDR, SDRC_MCFG_0);
-
-	/* set timing */
-	if ((get_mem_type() == GPMC_ONENAND) || (get_mem_type() == MMC_ONENAND)) {
-		__raw_writel(INFINEON_SDRC_ACTIM_CTRLA_0, SDRC_ACTIM_CTRLA_0);
-		__raw_writel(INFINEON_SDRC_ACTIM_CTRLB_0, SDRC_ACTIM_CTRLB_0);
+	if (beagle_revision() == REVISION_XM) {
+		__raw_writel(0x4, SDRC_CS_CFG); /* 512MB/bank */
+		__raw_writel(SDP_SDRC_MDCFG_0_DDR_XM, SDRC_MCFG_0);
+		__raw_writel(SDP_SDRC_MDCFG_0_DDR_XM, SDRC_MCFG_1);
+		__raw_writel(MICRON_V_ACTIMA_200, SDRC_ACTIM_CTRLA_0);
+		__raw_writel(MICRON_V_ACTIMB_200, SDRC_ACTIM_CTRLB_0);
+		__raw_writel(MICRON_V_ACTIMA_200, SDRC_ACTIM_CTRLA_1);
+		__raw_writel(MICRON_V_ACTIMB_200, SDRC_ACTIM_CTRLB_1);
+		__raw_writel(SDP_3430_SDRC_RFR_CTRL_200MHz, SDRC_RFR_CTRL_0);
+		__raw_writel(SDP_3430_SDRC_RFR_CTRL_200MHz, SDRC_RFR_CTRL_1);
+	} else {
+		__raw_writel(0x1, SDRC_CS_CFG); /* 128MB/bank */
+		__raw_writel(SDP_SDRC_MDCFG_0_DDR, SDRC_MCFG_0);
+		__raw_writel(SDP_SDRC_MDCFG_0_DDR, SDRC_MCFG_1);
+		__raw_writel(MICRON_V_ACTIMA_165, SDRC_ACTIM_CTRLA_0);
+		__raw_writel(MICRON_V_ACTIMB_165, SDRC_ACTIM_CTRLB_0);
+		__raw_writel(MICRON_V_ACTIMA_165, SDRC_ACTIM_CTRLA_1);
+		__raw_writel(MICRON_V_ACTIMB_165, SDRC_ACTIM_CTRLB_1);
+		__raw_writel(SDP_3430_SDRC_RFR_CTRL_165MHz, SDRC_RFR_CTRL_0);
+		__raw_writel(SDP_3430_SDRC_RFR_CTRL_165MHz, SDRC_RFR_CTRL_1);
 	}
-	if ((get_mem_type() == GPMC_NAND) || (get_mem_type() == MMC_NAND)) {
-		__raw_writel(MICRON_SDRC_ACTIM_CTRLA_0, SDRC_ACTIM_CTRLA_0);
-		__raw_writel(MICRON_SDRC_ACTIM_CTRLB_0, SDRC_ACTIM_CTRLB_0);
-	}
 
-	__raw_writel(SDP_SDRC_RFR_CTRL, SDRC_RFR_CTRL);
 	__raw_writel(SDP_SDRC_POWER_POP, SDRC_POWER);
 
 	/* init sequence for mDDR/mSDR using manual commands (DDR is different) */
 	__raw_writel(CMD_NOP, SDRC_MANUAL_0);
+	__raw_writel(CMD_NOP, SDRC_MANUAL_1);
+
 	delay(5000);
+
 	__raw_writel(CMD_PRECHARGE, SDRC_MANUAL_0);
+	__raw_writel(CMD_PRECHARGE, SDRC_MANUAL_1);
+
 	__raw_writel(CMD_AUTOREFRESH, SDRC_MANUAL_0);
+	__raw_writel(CMD_AUTOREFRESH, SDRC_MANUAL_1);
+
 	__raw_writel(CMD_AUTOREFRESH, SDRC_MANUAL_0);
+	__raw_writel(CMD_AUTOREFRESH, SDRC_MANUAL_1);
 
 	/* set mr0 */
 	__raw_writel(SDP_SDRC_MR_0_DDR, SDRC_MR_0);
+	__raw_writel(SDP_SDRC_MR_0_DDR, SDRC_MR_1);
 
 	/* set up dll */
 	__raw_writel(SDP_SDRC_DLLAB_CTRL, SDRC_DLLA_CTRL);
@@ -269,12 +334,14 @@ void config_3430sdram_ddr(void)
  *************************************************************/
 u32 get_osc_clk_speed(void)
 {
-	u32 start, cstart, cend, cdiff, val;
+	u32 start, cstart, cend, cdiff, cdiv, val;
 
 	val = __raw_readl(PRM_CLKSRC_CTRL);
-	/* If SYS_CLK is being divided by 2, remove for now */
-	val = (val & (~BIT7)) | BIT6;
-	__raw_writel(val, PRM_CLKSRC_CTRL);
+
+	if (val & SYSCLKDIV_2)
+		cdiv = 2;
+	else
+		cdiv = 1;
 
 	/* enable timer2 */
 	val = __raw_readl(CM_CLKSEL_WKUP) | BIT0;
@@ -298,6 +365,7 @@ u32 get_osc_clk_speed(void)
 	while (__raw_readl(S32K_CR) < (start + 20)) ;	/* wait for 40 cycles */
 	cend = __raw_readl(OMAP34XX_GPT1 + TCRR);	/* get end sys_clk count */
 	cdiff = cend - cstart;	/* get elapsed ticks */
+	cdiff *= cdiv;
 
 	/* based on number of ticks assign speed */
 	if (cdiff > 19000)
@@ -412,9 +480,17 @@ void prcm_init(void)
 	sr32(CM_CLKSEL_CAM, 0, 5, PER_M5X2);	/* set M5 */
 	sr32(CM_CLKSEL_DSS, 0, 5, PER_M4X2);	/* set M4 */
 	sr32(CM_CLKSEL_DSS, 8, 5, PER_M3X2);	/* set M3 */
-	sr32(CM_CLKSEL3_PLL, 0, 5, dpll_param_p->m2);	/* set M2 */
-	sr32(CM_CLKSEL2_PLL, 8, 11, dpll_param_p->m);	/* set m */
-	sr32(CM_CLKSEL2_PLL, 0, 7, dpll_param_p->n);	/* set n */
+
+	if (beagle_revision() == REVISION_XM) {
+	        sr32(CM_CLKSEL3_PLL, 0, 5, CORE_DPLL_PARAM_M2);   /* set M2 */
+	        sr32(CM_CLKSEL2_PLL, 8, 11, CORE_DPLL_PARAM_M);   /* set m */
+	        sr32(CM_CLKSEL2_PLL, 0, 7, CORE_DPLL_PARAM_N);    /* set n */
+	} else {
+		sr32(CM_CLKSEL3_PLL, 0, 5, dpll_param_p->m2);	/* set M2 */
+		sr32(CM_CLKSEL2_PLL, 8, 11, dpll_param_p->m);	/* set m */
+		sr32(CM_CLKSEL2_PLL, 0, 7, dpll_param_p->n);	/* set n */
+	}
+
 	sr32(CM_CLKEN_PLL, 20, 4, dpll_param_p->fsel);	/* FREQSEL */
 	sr32(CM_CLKEN_PLL, 16, 3, PLL_LOCK);	/* lock mode */
 	wait_on_value(BIT1, 2, CM_IDLEST_CKGEN, LDELAY);
@@ -523,8 +599,8 @@ void s_init(void)
 	try_unlock_memory();
 	set_muxconf_regs();
 	delay(100);
-	prcm_init();
 	per_clocks_enable();
+	prcm_init();
 	config_3430sdram_ddr();
 }
 
@@ -534,6 +610,26 @@ void s_init(void)
  ********************************************************/
 int misc_init_r(void)
 {
+	int rev;
+
+	rev = beagle_revision();
+	switch (rev) {
+	case REVISION_AXBX:
+		printf("Beagle Rev Ax/Bx\n");
+		break;
+	case REVISION_CX:
+		printf("Beagle Rev C1/C2/C3\n");
+		break;
+	case REVISION_C4:
+		printf("Beagle Rev C4\n");
+		break;
+	case REVISION_XM:
+		printf("Beagle xM Rev A\n");
+		break;
+	default:
+		printf("Beagle unknown 0x%02x\n", rev);
+	}
+
 	return 0;
 }
 
@@ -622,9 +718,9 @@ void per_clocks_enable(void)
 	sr32(CM_FCLKEN_PER, 0, 32, FCK_PER_ON);
 	sr32(CM_ICLKEN_PER, 0, 32, ICK_PER_ON);
 
-	/* Enable GPIO5 clocks for blinky LEDs */
-	sr32(CM_FCLKEN_PER, 16, 1, 0x1);	/* FCKen GPIO5 */
-	sr32(CM_ICLKEN_PER, 16, 1, 0x1);	/* ICKen GPIO5 */
+	/* Enable GPIO 5 & GPIO 6 clocks */
+	sr32(CM_FCLKEN_PER, 17, 2, 0x3);
+	sr32(CM_ICLKEN_PER, 17, 2, 0x3);
 
 	delay(1000);
 }
@@ -759,6 +855,9 @@ void per_clocks_enable(void)
 	MUX_VAL(CP(I2C3_SDA),       (IEN  | PTU | EN  | M0)) /*I2C3_SDA*/\
 	MUX_VAL(CP(I2C4_SCL),       (IEN  | PTU | EN  | M0)) /*I2C4_SCL*/\
 	MUX_VAL(CP(I2C4_SDA),       (IEN  | PTU | EN  | M0)) /*I2C4_SDA*/\
+	MUX_VAL(CP(McSPI1_CLK),     (IEN  | PTU | EN  | M4)) /*GPIO_171*/\
+	MUX_VAL(CP(McSPI1_SIMO),    (IEN  | PTU | EN  | M4)) /*GPIO_172*/\
+	MUX_VAL(CP(McSPI1_SOMI),    (IEN  | PTU | EN  | M4)) /*GPIO_173*/\
 	MUX_VAL(CP(McBSP1_DX),      (IEN  | PTD | DIS | M4)) /*GPIO_158*/\
 	MUX_VAL(CP(SYS_32K),        (IEN  | PTD | DIS | M0)) /*SYS_32K*/\
 	MUX_VAL(CP(SYS_BOOT0),      (IEN  | PTD | DIS | M4)) /*GPIO_2 */\
