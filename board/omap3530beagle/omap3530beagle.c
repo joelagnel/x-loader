@@ -279,7 +279,7 @@ void config_3430sdram_ddr(void)
 	__raw_writel(SDP_SDRC_SHARING, SDRC_SHARING);
 
 	if (beagle_revision() == REVISION_XM) {
-		__raw_writel(0x4, SDRC_CS_CFG); /* 512MB/bank */
+		__raw_writel(0x2, SDRC_CS_CFG); /* 256MB/bank */
 		__raw_writel(SDP_SDRC_MDCFG_0_DDR_XM, SDRC_MCFG_0);
 		__raw_writel(SDP_SDRC_MDCFG_0_DDR_XM, SDRC_MCFG_1);
 		__raw_writel(MICRON_V_ACTIMA_200, SDRC_ACTIM_CTRLA_0);

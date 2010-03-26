@@ -71,7 +71,7 @@ typedef enum {
 #define SDP_SDRC_MDCFG_0_DDR	(0x02582019|B_ALL) /* Infin ddr module */
 #else
 #define SDP_SDRC_MDCFG_0_DDR	(0x02584019|B_ALL)
-#define SDP_SDRC_MDCFG_0_DDR_XM	(0x04590019|B_ALL)
+#define SDP_SDRC_MDCFG_0_DDR_XM	(0x03588019|B_ALL)
 #endif
 
 #define SDP_SDRC_MR_0_DDR		0x00000032
