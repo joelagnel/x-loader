@@ -265,6 +265,32 @@ u32 wait_on_value(u32 read_bit_mask, u32 match_value, u32 read_addr, u32 bound)
 }
 
 #ifdef CFG_3430SDRAM_DDR
+
+#define MICRON_DDR	0
+#define NUMONYX_MCP	1
+int identify_xm_ddr()
+{
+	int	mfr, id;
+
+	__raw_writel(M_NAND_GPMC_CONFIG1, GPMC_CONFIG1 + GPMC_CONFIG_CS0);
+	__raw_writel(M_NAND_GPMC_CONFIG2, GPMC_CONFIG2 + GPMC_CONFIG_CS0);
+	__raw_writel(M_NAND_GPMC_CONFIG3, GPMC_CONFIG3 + GPMC_CONFIG_CS0);
+	__raw_writel(M_NAND_GPMC_CONFIG4, GPMC_CONFIG4 + GPMC_CONFIG_CS0);
+	__raw_writel(M_NAND_GPMC_CONFIG5, GPMC_CONFIG5 + GPMC_CONFIG_CS0);
+	__raw_writel(M_NAND_GPMC_CONFIG6, GPMC_CONFIG6 + GPMC_CONFIG_CS0);
+
+	/* Enable the GPMC Mapping */
+	__raw_writel((((OMAP34XX_GPMC_CS0_SIZE & 0xF)<<8) |
+			     ((NAND_BASE_ADR>>24) & 0x3F) |
+			     (1<<6)),  (GPMC_CONFIG7 + GPMC_CONFIG_CS0));
+	delay(2000);
+
+	nand_readid(&mfr, &id);
+	if (mfr == 0)
+		return MICRON_DDR;
+	if ((mfr == 0x20) && (id == 0xba))
+		return NUMONYX_MCP;
+}
 /*********************************************************************
  * config_3430sdram_ddr() - Init DDR on 3430SDP dev board.
  *********************************************************************/
@@ -279,15 +305,27 @@ void config_3430sdram_ddr(void)
 	__raw_writel(SDP_SDRC_SHARING, SDRC_SHARING);
 
 	if (beagle_revision() == REVISION_XM) {
-		__raw_writel(0x2, SDRC_CS_CFG); /* 256MB/bank */
-		__raw_writel(SDP_SDRC_MDCFG_0_DDR_XM, SDRC_MCFG_0);
-		__raw_writel(SDP_SDRC_MDCFG_0_DDR_XM, SDRC_MCFG_1);
-		__raw_writel(MICRON_V_ACTIMA_200, SDRC_ACTIM_CTRLA_0);
-		__raw_writel(MICRON_V_ACTIMB_200, SDRC_ACTIM_CTRLB_0);
-		__raw_writel(MICRON_V_ACTIMA_200, SDRC_ACTIM_CTRLA_1);
-		__raw_writel(MICRON_V_ACTIMB_200, SDRC_ACTIM_CTRLB_1);
-		__raw_writel(SDP_3430_SDRC_RFR_CTRL_200MHz, SDRC_RFR_CTRL_0);
-		__raw_writel(SDP_3430_SDRC_RFR_CTRL_200MHz, SDRC_RFR_CTRL_1);
+		if (identify_xm_ddr() == MICRON_DDR) {
+			__raw_writel(0x2, SDRC_CS_CFG); /* 256MB/bank */
+			__raw_writel(SDP_SDRC_MDCFG_0_DDR_MICRON_XM, SDRC_MCFG_0);
+			__raw_writel(SDP_SDRC_MDCFG_0_DDR_MICRON_XM, SDRC_MCFG_1);
+			__raw_writel(MICRON_V_ACTIMA_200, SDRC_ACTIM_CTRLA_0);
+			__raw_writel(MICRON_V_ACTIMB_200, SDRC_ACTIM_CTRLB_0);
+			__raw_writel(MICRON_V_ACTIMA_200, SDRC_ACTIM_CTRLA_1);
+			__raw_writel(MICRON_V_ACTIMB_200, SDRC_ACTIM_CTRLB_1);
+			__raw_writel(SDP_3430_SDRC_RFR_CTRL_200MHz, SDRC_RFR_CTRL_0);
+			__raw_writel(SDP_3430_SDRC_RFR_CTRL_200MHz, SDRC_RFR_CTRL_1);
+		} else {
+			__raw_writel(0x4, SDRC_CS_CFG); /* 512MB/bank */
+			__raw_writel(SDP_SDRC_MDCFG_0_DDR_NUMONYX_XM, SDRC_MCFG_0);
+			__raw_writel(SDP_SDRC_MDCFG_0_DDR_NUMONYX_XM, SDRC_MCFG_1);
+			__raw_writel(NUMONYX_V_ACTIMA_165, SDRC_ACTIM_CTRLA_0);
+			__raw_writel(NUMONYX_V_ACTIMB_165, SDRC_ACTIM_CTRLB_0);
+			__raw_writel(NUMONYX_V_ACTIMA_165, SDRC_ACTIM_CTRLA_1);
+			__raw_writel(NUMONYX_V_ACTIMB_165, SDRC_ACTIM_CTRLB_1);
+			__raw_writel(SDP_3430_SDRC_RFR_CTRL_165MHz, SDRC_RFR_CTRL_0);
+			__raw_writel(SDP_3430_SDRC_RFR_CTRL_165MHz, SDRC_RFR_CTRL_1);
+		}
 	} else {
 		__raw_writel(0x1, SDRC_CS_CFG); /* 128MB/bank */
 		__raw_writel(SDP_SDRC_MDCFG_0_DDR, SDRC_MCFG_0);

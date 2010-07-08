@@ -154,6 +154,29 @@ static int NanD_Address(unsigned int numbytes, unsigned long ofs)
 	return 0;
 }
 
+int nand_readid(int *mfr, int *id)
+{
+	NAND_ENABLE_CE();
+
+	if (NanD_Command(NAND_CMD_RESET)) {
+		NAND_DISABLE_CE();
+		return 1;
+	}
+ 
+	if (NanD_Command(NAND_CMD_READID)) {
+		NAND_DISABLE_CE();
+		return 1;
+	}
+ 
+	NanD_Address(ADDR_COLUMN, 0);
+
+	*mfr = READ_NAND(NAND_ADDR);
+	*id = READ_NAND(NAND_ADDR);
+
+	NAND_DISABLE_CE();
+	return 0;
+}
+
 /* read chip mfr and id
  * return 0 if they match board config
  * return 1 if not
@@ -162,23 +185,23 @@ int nand_chip()
 {
 	int mfr, id;
 
- 	NAND_ENABLE_CE();
+	NAND_ENABLE_CE();
 
- 	if (NanD_Command(NAND_CMD_RESET)) {
- 		printf("Err: RESET\n");
- 		NAND_DISABLE_CE();   
+	if (NanD_Command(NAND_CMD_RESET)) {
+		printf("Err: RESET\n");
+		NAND_DISABLE_CE();   
 		return 1;
 	}
  
- 	if (NanD_Command(NAND_CMD_READID)) {
- 		printf("Err: READID\n");
- 		NAND_DISABLE_CE();
+	if (NanD_Command(NAND_CMD_READID)) {
+		printf("Err: READID\n");
+		NAND_DISABLE_CE();
 		return 1;
- 	}
+	}
  
- 	NanD_Address(ADDR_COLUMN, 0);
+	NanD_Address(ADDR_COLUMN, 0);
 
- 	mfr = READ_NAND(NAND_ADDR);
+	mfr = READ_NAND(NAND_ADDR);
 	id = READ_NAND(NAND_ADDR);
 
 	NAND_DISABLE_CE();
