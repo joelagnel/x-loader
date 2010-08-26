@@ -211,8 +211,13 @@ int nand_chip()
 	     (mfr == K9F1G08R0A_MFR && (id == K9F1G08R0A_ID))) {
 		return 0;
 	} else {
-		printf("Unknown chip: mfr was 0x%02x, id was 0x%02x\n", mfr, id);
-		return 1;
+		if ((mfr == 0) && (id == 0)) {
+			printf("No NAND detected\n");
+			return 0;
+		} else {
+			printf("Unknown chip: mfr was 0x%02x, id was 0x%02x\n", mfr, id);
+			return 1;
+		}
 	}
 }
 
