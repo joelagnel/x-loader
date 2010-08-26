@@ -32,11 +32,17 @@
 #include <fat.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/bits.h>
+#include <asm/arch/gpio.h>
 #include <asm/arch/mux.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/sys_info.h>
 #include <asm/arch/clocks.h>
 #include <asm/arch/mem.h>
+
+/* params for 37XX */
+#define CORE_DPLL_PARAM_M2	0x09
+#define CORE_DPLL_PARAM_M	0x360
+#define CORE_DPLL_PARAM_N	0xC
 
 /* Used to index into DPLL parameter tables */
 struct dpll_param {
@@ -58,6 +64,16 @@ extern dpll_param *get_per_dpll_param();
 #define __raw_writel(v, a)	(*(volatile unsigned int *)(a) = (v))
 #define __raw_readw(a)		(*(volatile unsigned short *)(a))
 #define __raw_writew(v, a)	(*(volatile unsigned short *)(a) = (v))
+
+static char *rev_s[CPU_3XX_MAX_REV] = {
+				"1.0",
+				"2.0",
+				"2.1",
+				"3.0",
+				"3.1",
+				"UNKNOWN",
+				"UNKNOWN",
+				"3.1.2"};
 
 /*******************************************************
  * Routine: delay
@@ -109,6 +125,7 @@ u32 get_sysboot_value(void)
 u32 get_mem_type(void)
 {
 	u32   mem_type = get_sysboot_value();
+
 	switch (mem_type) {
 	case 0:
 	case 2:
@@ -151,21 +168,158 @@ u32 get_mem_type(void)
 }
 
 /******************************************
+ * get_cpu_type(void) - extract cpu info
+ ******************************************/
+u32 get_cpu_type(void)
+{
+	return __raw_readl(CONTROL_OMAP_STATUS);
+}
+
+/******************************************
+ * get_cpu_id(void) - extract cpu id
+ * returns 0 for ES1.0, cpuid otherwise
+ ******************************************/
+u32 get_cpu_id(void)
+{
+	u32 cpuid = 0;
+
+	/*
+	 * On ES1.0 the IDCODE register is not exposed on L4
+	 * so using CPU ID to differentiate between ES1.0 and > ES1.0.
+	 */
+	__asm__ __volatile__("mrc p15, 0, %0, c0, c0, 0":"=r"(cpuid));
+	if ((cpuid & 0xf) == 0x0) {
+		return 0;
+	} else {
+		/* Decode the IDs on > ES1.0 */
+		cpuid = __raw_readl(CONTROL_IDCODE);
+	}
+
+	return cpuid;
+}
+
+/******************************************
+ * get_cpu_family(void) - extract cpu info
+ ******************************************/
+u32 get_cpu_family(void)
+{
+	u16 hawkeye;
+	u32 cpu_family;
+	u32 cpuid = get_cpu_id();
+
+	if (cpuid == 0)
+		return CPU_OMAP34XX;
+
+	hawkeye = (cpuid >> HAWKEYE_SHIFT) & 0xffff;
+	switch (hawkeye) {
+	case HAWKEYE_OMAP34XX:
+		cpu_family = CPU_OMAP34XX;
+		break;
+	case HAWKEYE_AM35XX:
+		cpu_family = CPU_AM35XX;
+		break;
+	case HAWKEYE_OMAP36XX:
+		cpu_family = CPU_OMAP36XX;
+		break;
+	default:
+		cpu_family = CPU_OMAP34XX;
+	}
+
+	return cpu_family;
+}
+
+/******************************************
  * get_cpu_rev(void) - extract version info
  ******************************************/
 u32 get_cpu_rev(void)
 {
-	u32 cpuid = 0;
-	/* On ES1.0 the IDCODE register is not exposed on L4
-	 * so using CPU ID to differentiate
-	 * between ES2.0 and ES1.0.
-	 */
-	__asm__ __volatile__("mrc p15, 0, %0, c0, c0, 0":"=r" (cpuid));
-	if ((cpuid  & 0xf) == 0x0)
-		return CPU_3430_ES1;
-	else
-		return CPU_3430_ES2;
+	u32 cpuid = get_cpu_id();
 
+	if (cpuid == 0)
+		return CPU_3XX_ES10;
+	else
+		return (cpuid >> CPU_3XX_ID_SHIFT) & 0xf;
+}
+
+/******************************************
+ * Print CPU information
+ ******************************************/
+int print_cpuinfo (void)
+{
+	char *cpu_family_s, *cpu_s, *sec_s;
+
+	switch (get_cpu_family()) {
+	case CPU_OMAP34XX:
+		cpu_family_s = "OMAP";
+		switch (get_cpu_type()) {
+		case OMAP3503:
+			cpu_s = "3503";
+			break;
+		case OMAP3515:
+			cpu_s = "3515";
+			break;
+		case OMAP3525:
+			cpu_s = "3525";
+			break;
+		case OMAP3530:
+			cpu_s = "3530";
+			break;
+		default:
+			cpu_s = "35XX";
+			break;
+		}
+		break;
+	case CPU_AM35XX:
+		cpu_family_s = "AM";
+		switch (get_cpu_type()) {
+		case AM3505:
+			cpu_s = "3505";
+			break;
+		case AM3517:
+			cpu_s = "3517";
+			break;
+		default:
+			cpu_s = "35XX";
+			break;
+		}
+		break;
+	case CPU_OMAP36XX:
+		cpu_family_s = "OMAP";
+		switch (get_cpu_type()) {
+		case OMAP3730:
+			cpu_s = "3630/3730";
+			break;
+		default:
+			cpu_s = "36XX/37XX";
+			break;
+		}
+		break;
+	default:
+		cpu_family_s = "OMAP";
+		cpu_s = "35XX";
+	}
+
+	switch (get_device_type()) {
+	case TST_DEVICE:
+		sec_s = "TST";
+		break;
+	case EMU_DEVICE:
+		sec_s = "EMU";
+		break;
+	case HS_DEVICE:
+		sec_s = "HS";
+		break;
+	case GP_DEVICE:
+		sec_s = "GP";
+		break;
+	default:
+		sec_s = "?";
+	}
+
+	printf("%s%s-%s ES%s\n",
+			cpu_family_s, cpu_s, sec_s, rev_s[get_cpu_rev()]);
+
+	return 0;
 }
 
 /******************************************
@@ -187,6 +341,37 @@ u32 cpu_is_3410(void)
 		else
 			return 0;
 	}
+}
+
+/*****************************************************************
+ * Routine: get_board_revision
+ * Description: Returns the board revision
+ *****************************************************************/
+int get_board_revision(void)
+{
+	int revision;
+
+	if (!omap_request_gpio(112) &&
+	    !omap_request_gpio(113) &&
+	    !omap_request_gpio(115)) {
+
+		omap_set_gpio_direction(112, 1);
+		omap_set_gpio_direction(113, 1);
+		omap_set_gpio_direction(115, 1);
+
+		revision = omap_get_gpio_datain(115) << 2 |
+			   omap_get_gpio_datain(113) << 1 |
+			   omap_get_gpio_datain(112);
+
+		omap_free_gpio(112);
+		omap_free_gpio(113);
+		omap_free_gpio(115);
+	} else {
+		printf("Error: unable to acquire board revision GPIOs\n");
+		revision = -1;
+	}
+
+	return revision;
 }
 
 /*****************************************************************
@@ -225,55 +410,73 @@ u32 wait_on_value(u32 read_bit_mask, u32 match_value, u32 read_addr, u32 bound)
  *********************************************************************/
 void config_3430sdram_ddr(void)
 {
-        /* reset sdrc controller */
-        __raw_writel(SOFTRESET, SDRC_SYSCONFIG);
-        wait_on_value(BIT0, BIT0, SDRC_STATUS, 12000000);
-        __raw_writel(0, SDRC_SYSCONFIG);
+	/* reset sdrc controller */
+	__raw_writel(SOFTRESET, SDRC_SYSCONFIG);
+	wait_on_value(BIT0, BIT0, SDRC_STATUS, 12000000);
+	__raw_writel(0, SDRC_SYSCONFIG);
 
-        /* setup sdrc to ball mux */
-        __raw_writel(SDP_SDRC_SHARING, SDRC_SHARING);
+	/* setup sdrc to ball mux */
+	__raw_writel(SDP_SDRC_SHARING, SDRC_SHARING);
 
-        /* SDRC put in weak */
-//        (*(unsigned int*)0x6D00008C) = 0x00000020;
+	switch (get_board_revision()) {
+	case 0: /* Micron 1286MB/256MB, 1/2 banks of 128MB */
+		__raw_writel(0x1, SDRC_CS_CFG); /* 128MB/bank */
+		__raw_writel(SDP_SDRC_MDCFG_0_DDR, SDRC_MCFG_0);
+		__raw_writel(SDP_SDRC_MDCFG_0_DDR, SDRC_MCFG_1);
+		__raw_writel(MICRON_V_ACTIMA_165, SDRC_ACTIM_CTRLA_0);
+		__raw_writel(MICRON_V_ACTIMB_165, SDRC_ACTIM_CTRLB_0);
+		__raw_writel(MICRON_V_ACTIMA_165, SDRC_ACTIM_CTRLA_1);
+		__raw_writel(MICRON_V_ACTIMB_165, SDRC_ACTIM_CTRLB_1);
+		__raw_writel(SDP_3430_SDRC_RFR_CTRL_165MHz, SDRC_RFR_CTRL_0);
+		__raw_writel(SDP_3430_SDRC_RFR_CTRL_165MHz, SDRC_RFR_CTRL_1);
+		break;
+	case 1: /* Micron 256MB/512MB, 1/2 banks of 256MB */
+		__raw_writel(0x2, SDRC_CS_CFG); /* 256MB/bank */
+		__raw_writel(SDP_SDRC_MDCFG_0_DDR_MICRON_XM, SDRC_MCFG_0);
+		__raw_writel(SDP_SDRC_MDCFG_0_DDR_MICRON_XM, SDRC_MCFG_1);
+		__raw_writel(MICRON_V_ACTIMA_165, SDRC_ACTIM_CTRLA_0);
+		__raw_writel(MICRON_V_ACTIMB_165, SDRC_ACTIM_CTRLB_0);
+		__raw_writel(MICRON_V_ACTIMA_165, SDRC_ACTIM_CTRLA_1);
+		__raw_writel(MICRON_V_ACTIMB_165, SDRC_ACTIM_CTRLB_1);
+		__raw_writel(SDP_3430_SDRC_RFR_CTRL_165MHz, SDRC_RFR_CTRL_0);
+		__raw_writel(SDP_3430_SDRC_RFR_CTRL_165MHz, SDRC_RFR_CTRL_1);
+		break;
+	default:
+		__raw_writel(0x1, SDRC_CS_CFG); /* 128MB/bank */
+		__raw_writel(SDP_SDRC_MDCFG_0_DDR, SDRC_MCFG_0);
+		__raw_writel(SDP_SDRC_MDCFG_0_DDR, SDRC_MCFG_1);
+		__raw_writel(MICRON_V_ACTIMA_165, SDRC_ACTIM_CTRLA_0);
+		__raw_writel(MICRON_V_ACTIMB_165, SDRC_ACTIM_CTRLB_0);
+		__raw_writel(MICRON_V_ACTIMA_165, SDRC_ACTIM_CTRLA_1);
+		__raw_writel(MICRON_V_ACTIMB_165, SDRC_ACTIM_CTRLB_1);
+		__raw_writel(SDP_3430_SDRC_RFR_CTRL_165MHz, SDRC_RFR_CTRL_0);
+		__raw_writel(SDP_3430_SDRC_RFR_CTRL_165MHz, SDRC_RFR_CTRL_1);
+	}
 
-        /* SDRC_MCFG0 register */
-        (*(unsigned int*)0x6D000080) = 0x02584099;//from Micron
+	__raw_writel(SDP_SDRC_POWER_POP, SDRC_POWER);
 
-        /* SDRC_ACTIM_CTRLA0 register */
-//our value        (*(unsigned int*)0x6D00009c) = 0xa29db4c6;// for 166M
-        (*(unsigned int*)0x6D00009c) = 0xaa9db4c6;// for 166M from rkw
+	/* init sequence for mDDR/mSDR using manual commands (DDR is different) */
+	__raw_writel(CMD_NOP, SDRC_MANUAL_0);
+	__raw_writel(CMD_NOP, SDRC_MANUAL_1);
 
-        /* SDRC_ACTIM_CTRLB0 register */
-//from micron   (*(unsigned int*)0x6D0000a0) = 0x12214;// for 166M
+	delay(5000);
 
-//        (*(unsigned int*)0x6D0000a0) = 0x00011417; our value
-        (*(unsigned int*)0x6D0000a0) = 0x00011517;
+	__raw_writel(CMD_PRECHARGE, SDRC_MANUAL_0);
+	__raw_writel(CMD_PRECHARGE, SDRC_MANUAL_1);
 
-        /* SDRC_RFR_CTRL0 register */
-//from micron   (*(unsigned int*)0x6D0000a4) =0x54601; // for 166M
+	__raw_writel(CMD_AUTOREFRESH, SDRC_MANUAL_0);
+	__raw_writel(CMD_AUTOREFRESH, SDRC_MANUAL_1);
 
-        (*(unsigned int*)0x6D0000a4) =0x0004DC01;
+	__raw_writel(CMD_AUTOREFRESH, SDRC_MANUAL_0);
+	__raw_writel(CMD_AUTOREFRESH, SDRC_MANUAL_1);
 
-        /* Disble Power Down of CKE cuz of 1 CKE on combo part */
-        (*(unsigned int*)0x6D000070) = 0x00000081;
+	/* set mr0 */
+	__raw_writel(SDP_SDRC_MR_0_DDR, SDRC_MR_0);
+	__raw_writel(SDP_SDRC_MR_0_DDR, SDRC_MR_1);
 
-        /* SDRC_Manual command register */
-        (*(unsigned int*)0x6D0000a8) = 0x00000000; // NOP command
-        delay(5000);
-        (*(unsigned int*)0x6D0000a8) = 0x00000001; // Precharge command
-        (*(unsigned int*)0x6D0000a8) = 0x00000002; // Auto-refresh command
-        (*(unsigned int*)0x6D0000a8) = 0x00000002; // Auto-refresh command
-
-        /* SDRC MR0 register */
-        (*(int*)0x6D000084) = 0x00000032; // Burst length =4
-        // CAS latency = 3
-        // Write Burst = Read Burst
-        // Serial Mode
-
-        /* SDRC DLLA control register */
-        (*(unsigned int*)0x6D000060) = 0x0000A;
-        delay(0x20000); // some delay
-
+	/* set up dll */
+	__raw_writel(SDP_SDRC_DLLAB_CTRL, SDRC_DLLA_CTRL);
+	delay(0x2000);	/* give time to lock */
 }
 #endif /* CFG_3430SDRAM_DDR */
 
@@ -283,12 +486,14 @@ void config_3430sdram_ddr(void)
  *************************************************************/
 u32 get_osc_clk_speed(void)
 {
-	u32 start, cstart, cend, cdiff, val;
+	u32 start, cstart, cend, cdiff, cdiv, val;
 
 	val = __raw_readl(PRM_CLKSRC_CTRL);
-	/* If SYS_CLK is being divided by 2, remove for now */
-	val = (val & (~BIT7)) | BIT6;
-	__raw_writel(val, PRM_CLKSRC_CTRL);
+
+	if (val & SYSCLKDIV_2)
+		cdiv = 2;
+	else
+		cdiv = 1;
 
 	/* enable timer2 */
 	val = __raw_readl(CM_CLKSEL_WKUP) | BIT0;
@@ -312,6 +517,7 @@ u32 get_osc_clk_speed(void)
 	while (__raw_readl(S32K_CR) < (start + 20));	/* wait for 40 cycles */
 	cend = __raw_readl(OMAP34XX_GPT1 + TCRR);	/* get end sys_clk count */
 	cdiff = cend - cstart;				/* get elapsed ticks */
+	cdiff *= cdiv;
 
 	/* based on number of ticks assign speed */
 	if (cdiff > 19000)
@@ -363,16 +569,18 @@ void prcm_init(void)
 	osc_clk = get_osc_clk_speed();
 	get_sys_clkin_sel(osc_clk, &sys_clkin_sel);
 
-	sr32(PRM_CLKSEL, 0, 3, sys_clkin_sel); /* set input crystal speed */
+	sr32(PRM_CLKSEL, 0, 3, sys_clkin_sel);	/* set input crystal speed */
 
 	/* If the input clock is greater than 19.2M always divide/2 */
 	if (sys_clkin_sel > 2) {
-		sr32(PRM_CLKSRC_CTRL, 6, 2, 2);/* input clock divider */
-		clk_index = sys_clkin_sel/2;
+		sr32(PRM_CLKSRC_CTRL, 6, 2, 2);	/* input clock divider */
+		clk_index = sys_clkin_sel / 2;
 	} else {
-		sr32(PRM_CLKSRC_CTRL, 6, 2, 1);/* input clock divider */
+		sr32(PRM_CLKSRC_CTRL, 6, 2, 1);	/* input clock divider */
 		clk_index = sys_clkin_sel;
 	}
+
+	sr32(PRM_CLKSRC_CTRL, 0, 2, 0);/* Bypass mode: T2 inputs a square clock */
 
 	/* The DPLL tables are defined according to sysclk value and
 	 * silicon revision. The clk_index value will be used to get
@@ -386,31 +594,35 @@ void prcm_init(void)
 	sr32(CM_CLKEN_PLL_MPU, 0, 3, PLL_LOW_POWER_BYPASS);
 	wait_on_value(BIT0, 0, CM_IDLEST_PLL_MPU, LDELAY);
 
-	/* Getting the base address of Core DPLL param table*/
-	dpll_param_p = (dpll_param *)get_core_dpll_param();
+	/* Getting the base address of Core DPLL param table */
+	dpll_param_p = (dpll_param *) get_core_dpll_param();
 	/* Moving it to the right sysclk and ES rev base */
-	dpll_param_p = dpll_param_p + 2*clk_index + sil_index;
+	dpll_param_p = dpll_param_p + 3 * clk_index + sil_index;
 	/* CORE DPLL */
 	/* sr32(CM_CLKSEL2_EMU) set override to work when asleep */
 	sr32(CM_CLKEN_PLL, 0, 3, PLL_FAST_RELOCK_BYPASS);
 	wait_on_value(BIT0, 0, CM_IDLEST_CKGEN, LDELAY);
+
+	 /* For 3430 ES1.0 Errata 1.50, default value directly doesnt
+	work. write another value and then default value. */
+	sr32(CM_CLKSEL1_EMU, 16, 5, CORE_M3X2 + 1);     /* m3x2 */
 	sr32(CM_CLKSEL1_EMU, 16, 5, CORE_M3X2);	/* m3x2 */
 	sr32(CM_CLKSEL1_PLL, 27, 2, dpll_param_p->m2);	/* Set M2 */
 	sr32(CM_CLKSEL1_PLL, 16, 11, dpll_param_p->m);	/* Set M */
 	sr32(CM_CLKSEL1_PLL, 8, 7, dpll_param_p->n);	/* Set N */
-	sr32(CM_CLKSEL1_PLL, 6, 1, 0);			/* 96M Src */
+	sr32(CM_CLKSEL1_PLL, 6, 1, 0);	/* 96M Src */
 	sr32(CM_CLKSEL_CORE, 8, 4, CORE_SSI_DIV);	/* ssi */
 	sr32(CM_CLKSEL_CORE, 4, 2, CORE_FUSB_DIV);	/* fsusb */
 	sr32(CM_CLKSEL_CORE, 2, 2, CORE_L4_DIV);	/* l4 */
 	sr32(CM_CLKSEL_CORE, 0, 2, CORE_L3_DIV);	/* l3 */
-	sr32(CM_CLKSEL_GFX, 0, 3, GFX_DIV);		/* gfx */
-	sr32(CM_CLKSEL_WKUP, 1, 2, WKUP_RSM);		/* reset mgr */
+	sr32(CM_CLKSEL_GFX, 0, 3, GFX_DIV);	/* gfx */
+	sr32(CM_CLKSEL_WKUP, 1, 2, WKUP_RSM);	/* reset mgr */
 	sr32(CM_CLKEN_PLL, 4, 4, dpll_param_p->fsel);	/* FREQSEL */
-	sr32(CM_CLKEN_PLL, 0, 3, PLL_LOCK);		/* lock mode */
+	sr32(CM_CLKEN_PLL, 0, 3, PLL_LOCK);	/* lock mode */
 	wait_on_value(BIT0, 1, CM_IDLEST_CKGEN, LDELAY);
 
-	/* Getting the base address to PER  DPLL param table*/
-	dpll_param_p = (dpll_param *)get_per_dpll_param();
+	/* Getting the base address to PER  DPLL param table */
+	dpll_param_p = (dpll_param *) get_per_dpll_param();
 	/* Moving it to the right sysclk base */
 	dpll_param_p = dpll_param_p + clk_index;
 	/* PER DPLL */
@@ -420,29 +632,39 @@ void prcm_init(void)
 	sr32(CM_CLKSEL_CAM, 0, 5, PER_M5X2);	/* set M5 */
 	sr32(CM_CLKSEL_DSS, 0, 5, PER_M4X2);	/* set M4 */
 	sr32(CM_CLKSEL_DSS, 8, 5, PER_M3X2);	/* set M3 */
-	sr32(CM_CLKSEL3_PLL, 0, 5, dpll_param_p->m2);	/* set M2 */
-	sr32(CM_CLKSEL2_PLL, 8, 11, dpll_param_p->m);	/* set m */
-	sr32(CM_CLKSEL2_PLL, 0, 7, dpll_param_p->n);	/* set n */
-	sr32(CM_CLKEN_PLL, 20, 4, dpll_param_p->fsel);/* FREQSEL */
+
+	if (get_cpu_family() == CPU_OMAP36XX) {
+	        sr32(CM_CLKSEL3_PLL, 0, 5, CORE_DPLL_PARAM_M2); /* set M2 */
+	        sr32(CM_CLKSEL2_PLL, 8, 11, CORE_DPLL_PARAM_M); /* set m */
+	        sr32(CM_CLKSEL2_PLL, 0, 7, CORE_DPLL_PARAM_N);  /* set n */
+	} else {
+		sr32(CM_CLKSEL3_PLL, 0, 5, dpll_param_p->m2);	/* set M2 */
+		sr32(CM_CLKSEL2_PLL, 8, 11, dpll_param_p->m);	/* set m */
+		sr32(CM_CLKSEL2_PLL, 0, 7, dpll_param_p->n);	/* set n */
+	}
+
+	sr32(CM_CLKEN_PLL, 20, 4, dpll_param_p->fsel);	/* FREQSEL */
 	sr32(CM_CLKEN_PLL, 16, 3, PLL_LOCK);	/* lock mode */
 	wait_on_value(BIT1, 2, CM_IDLEST_CKGEN, LDELAY);
 
-	/* Getting the base address to MPU DPLL param table*/
-	dpll_param_p = (dpll_param *)get_mpu_dpll_param();
+	/* Getting the base address to MPU DPLL param table */
+	dpll_param_p = (dpll_param *) get_mpu_dpll_param();
+
 	/* Moving it to the right sysclk and ES rev base */
-	dpll_param_p = dpll_param_p + 2*clk_index + sil_index;
+	dpll_param_p = dpll_param_p + 3 * clk_index + sil_index;
+
 	/* MPU DPLL (unlocked already) */
 	sr32(CM_CLKSEL2_PLL_MPU, 0, 5, dpll_param_p->m2);	/* Set M2 */
 	sr32(CM_CLKSEL1_PLL_MPU, 8, 11, dpll_param_p->m);	/* Set M */
 	sr32(CM_CLKSEL1_PLL_MPU, 0, 7, dpll_param_p->n);	/* Set N */
 	sr32(CM_CLKEN_PLL_MPU, 4, 4, dpll_param_p->fsel);	/* FREQSEL */
-	sr32(CM_CLKEN_PLL_MPU, 0, 3, PLL_LOCK); /* lock mode */
+	sr32(CM_CLKEN_PLL_MPU, 0, 3, PLL_LOCK);	/* lock mode */
 	wait_on_value(BIT0, 1, CM_IDLEST_PLL_MPU, LDELAY);
 
-	/* Getting the base address to IVA DPLL param table*/
-	dpll_param_p = (dpll_param *)get_iva_dpll_param();
+	/* Getting the base address to IVA DPLL param table */
+	dpll_param_p = (dpll_param *) get_iva_dpll_param();
 	/* Moving it to the right sysclk and ES rev base */
-	dpll_param_p = dpll_param_p + 2*clk_index + sil_index;
+	dpll_param_p = dpll_param_p + 3 * clk_index + sil_index;
 	/* IVA DPLL (set to 12*20=240MHz) */
 	sr32(CM_CLKEN_PLL_IVA2, 0, 3, PLL_STOP);
 	wait_on_value(BIT0, 0, CM_IDLEST_PLL_IVA2, LDELAY);
@@ -536,20 +758,11 @@ void s_init(void)
 
 /*******************************************************
  * Routine: misc_init_r
- * Description: Init ethernet (done here so udelay works)
  ********************************************************/
 int misc_init_r(void)
 {
-#ifdef CONFIG_MMC
-	/* REMOVE!! for proto boards only */
-	/* set vaux2 to 2.8V */
-	unsigned char byte = 0x20;
-	i2c_write(0x4B, 0x76, 1, &byte, 1);
-	byte = 0x09;
-	i2c_write(0x4B, 0x79, 1, &byte, 1);
-
-	udelay(5000);
-#endif
+	print_cpuinfo();
+	printf("Board revision: %d\n", get_board_revision());
 	return 0;
 }
 
@@ -616,6 +829,10 @@ void per_clocks_enable(void)
 
 #endif
 
+	/* Enable GPIO 4, 5, & 6 clocks */
+	sr32(CM_FCLKEN_PER, 17, 3, 0x7);
+	sr32(CM_ICLKEN_PER, 17, 3, 0x7);
+
 #ifdef CONFIG_DRIVER_OMAP34XX_I2C
 	/* Turn on all 3 I2C clocks */
 	sr32(CM_FCLKEN1_CORE, 15, 3, 0x7);
@@ -637,10 +854,6 @@ void per_clocks_enable(void)
 	sr32(CM_ICLKEN_CAM, 0, 32, ICK_CAM_ON);
 	sr32(CM_FCLKEN_PER, 0, 32, FCK_PER_ON);
 	sr32(CM_ICLKEN_PER, 0, 32, ICK_PER_ON);
-
-	/* Enable GPIO5 clocks for blinky LEDs */
-	sr32(CM_FCLKEN_PER, 16, 1, 0x1);	/* FCKen GPIO5 */
-	sr32(CM_ICLKEN_PER, 16, 1, 0x1);	/* ICKen GPIO5 */
 
 	delay(1000);
 }
@@ -748,6 +961,11 @@ void per_clocks_enable(void)
 	MUX_VAL(CP(DSS_DATA19),     (IEN  | PTD | DIS | M4)) /*GPIO_89*/\
 	MUX_VAL(CP(DSS_DATA20),     (IEN  | PTD | DIS | M4)) /*GPIO_90*/\
 	MUX_VAL(CP(DSS_DATA21),     (IEN  | PTD | DIS | M4)) /*GPIO_91*/\
+	MUX_VAL(CP(CSI2_DX0),       (IEN  | PTD | EN  | M4)) /*GPIO_112*/\
+	MUX_VAL(CP(CSI2_DY0),       (IEN  | PTD | EN  | M4)) /*GPIO_113*/\
+	MUX_VAL(CP(CSI2_DX1),       (IEN  | PTD | EN  | M4)) /*GPIO_114*/\
+								 /* - PEN_DOWN*/\
+	MUX_VAL(CP(CSI2_DY1),       (IEN  | PTD | EN  | M4)) /*GPIO_115*/\
 	MUX_VAL(CP(CAM_WEN),        (IEN  | PTD | DIS | M4)) /*GPIO_167*/\
 	MUX_VAL(CP(MMC1_CLK),       (IDIS | PTU | EN  | M0)) /*MMC1_CLK*/\
 	MUX_VAL(CP(MMC1_CMD),       (IEN  | PTU | EN  | M0)) /*MMC1_CMD*/\
@@ -755,10 +973,12 @@ void per_clocks_enable(void)
 	MUX_VAL(CP(MMC1_DAT1),      (IEN  | PTU | EN  | M0)) /*MMC1_DAT1*/\
 	MUX_VAL(CP(MMC1_DAT2),      (IEN  | PTU | EN  | M0)) /*MMC1_DAT2*/\
 	MUX_VAL(CP(MMC1_DAT3),      (IEN  | PTU | EN  | M0)) /*MMC1_DAT3*/\
-	MUX_VAL(CP(MMC1_DAT4),      (IEN  | PTU | EN  | M0)) /*MMC1_DAT4*/\
-	MUX_VAL(CP(MMC1_DAT5),      (IEN  | PTU | EN  | M0)) /*MMC1_DAT5*/\
-	MUX_VAL(CP(MMC1_DAT6),      (IEN  | PTU | EN  | M0)) /*MMC1_DAT6*/\
-	MUX_VAL(CP(MMC1_DAT7),      (IEN  | PTU | EN  | M0)) /*MMC1_DAT7*/\
+	MUX_VAL(CP(MMC1_DAT4),      (IEN  | PTD | EN  | M4)) /*GPIO_126*/\
+	MUX_VAL(CP(MMC1_DAT5),      (IEN  | PTD | EN  | M4)) /*GPIO_127*/\
+	MUX_VAL(CP(MMC1_DAT6),      (IEN  | PTD | EN  | M4)) /*GPIO_128*/\
+	MUX_VAL(CP(MMC1_DAT7),      (IEN  | PTD | EN  | M4)) /*GPIO_129*/\
+	MUX_VAL(CP(MMC2_CLK),       (IEN  | PTU | EN  | M4)) /*GPIO_130*/\
+	MUX_VAL(CP(MMC2_DAT7),      (IEN  | PTU | EN  | M4)) /*GPIO_139*/\
 	MUX_VAL(CP(UART1_TX),       (IDIS | PTD | DIS | M0)) /*UART1_TX*/\
 	MUX_VAL(CP(UART1_RTS),      (IDIS | PTD | DIS | M0)) /*UART1_RTS*/\
 	MUX_VAL(CP(UART1_CTS),      (IEN  | PTU | DIS | M0)) /*UART1_CTS*/\

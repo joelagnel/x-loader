@@ -138,4 +138,60 @@
 #define ENHANCED_UI_EE_NAME		"750-2075"
 #endif
 
+/*
+ * 343x real hardware:
+ *  ES1     = rev 0
+ *
+ *  ES2 onwards, the value maps to contents of IDCODE register [31:28].
+ *
+ * Note : CPU_3XX_ES20 is used in cache.S.  Please review before changing.
+ */
+#define CPU_3XX_ES10		0
+#define CPU_3XX_ES20		1
+#define CPU_3XX_ES21		2
+#define CPU_3XX_ES30		3
+#define CPU_3XX_ES31		4
+#define CPU_3XX_ES312		7
+#define CPU_3XX_MAX_REV		8
+
+#define CPU_3XX_ID_SHIFT	28
+
+#define WIDTH_8BIT		0x0000
+#define WIDTH_16BIT		0x1000	/* bit pos for 16 bit in gpmc */
+
+/*
+ * Control idcode register contains hawkeye and revision info
+ */
+#define CONTROL_IDCODE		0x4830A204
+#define CONTROL_OMAP_STATUS     0x4800244C
+
+/*
+ * Hawkeye values
+ */
+#define HAWKEYE_OMAP34XX	0xb7ae
+#define HAWKEYE_AM35XX		0xb868
+#define HAWKEYE_OMAP36XX	0xb891
+
+#define HAWKEYE_SHIFT		12
+
+/*
+ * Define CPU families
+ */
+#define CPU_OMAP34XX		0x3400	/* OMAP34xx/OMAP35 devices */
+#define CPU_AM35XX		0x3500	/* AM35xx devices          */
+#define CPU_OMAP36XX		0x3600	/* OMAP36xx devices        */
+
+/*
+ * Control status register values corresponding to cpu variants
+ */
+#define OMAP3503		0x5c00
+#define OMAP3515		0x1c00
+#define OMAP3525		0x4c00
+#define OMAP3530		0x0c00
+
+#define AM3505			0x5c00
+#define AM3517			0x1c00
+
+#define OMAP3730		0x0c00
+
 #endif  /* _OMAP3430_SYS_H_ */
