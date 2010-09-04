@@ -235,7 +235,7 @@ void config_3430sdram_ddr(void)
         	__raw_writel(MICRON_SDRC_ACTIM_CTRLB_0, SDRC_ACTIM_CTRLB_0);
 	}
 
-	__raw_writel(SDP_SDRC_RFR_CTRL, SDRC_RFR_CTRL);
+	__raw_writel(SDP_3430_SDRC_RFR_CTRL_165MHz, SDRC_RFR_CTRL_0);
 	__raw_writel(SDP_SDRC_POWER_POP, SDRC_POWER);
 
 	/* init sequence for mDDR/mSDR using manual commands (DDR is different) */
