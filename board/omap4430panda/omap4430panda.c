@@ -34,8 +34,6 @@
 #include <linux/mtd/nand_legacy.h>
 #endif
 
-#define CONFIG_OMAP4_SDC		1
-
 /* EMIF and DMM registers */
 #define EMIF1_BASE			0x4c000000
 #define EMIF2_BASE			0x4d000000
@@ -62,6 +60,7 @@
 #define EMIF_L3_CONFIG			0x0054
 #define EMIF_L3_CFG_VAL_1		0x0058
 #define EMIF_L3_CFG_VAL_2		0x005C
+#define IODFT_TLGC			0x0060
 #define EMIF_PERF_CNT_1			0x0080
 #define EMIF_PERF_CNT_2			0x0084
 #define EMIF_PERF_CNT_CFG		0x0088
@@ -129,137 +128,25 @@
  * should be programmed for new OPP.
  */
 /* Elpida 2x2Gbit */
-#ifdef CONFIG_OMAP4_SDC
-#ifndef CORE_190MHZ
-	/*
-	 * EMIF_SDRAM_REF_CTRL
-	 * refresh rate = DDR_CLK / reg_refresh_rate
-	 * 1/3.9 uS = (333MHz)	/ reg_refresh_rate
-	 */
 #define SDRAM_REF_CTRL			0x0000004A
-#define SDRAM_REF_CTRL_OPP100		0x0000050E
-/*
- *	28:25 REG_T_RP 	Minimum number of m_clk cycles from
- *			Precharge to Activate or Refresh, minus one.
- *	24:21 REG_T_RCD	Minimum number of m_clk cycles from
- *			Activate to Read or Write, minus one.
- *	20:17 REG_T_WR	Minimum number of m_clk cycles from last
- *			Write transfer to Pre-charge, minus one.
- *	16:12 REG_T_RAS	Minimum number of m_clk cycles from Activate
- *			to Pre-charge, minus one. reg_t_ras value need
- *			to be bigger than or equal to reg_t_rcd value.
- *	11:6 REG_T_RC 	Minimum number of m_clk cycles from
- *			Activate to Activate, minus one.
- *	5:3 REG_T_RRD 	Minimum number of m_clk cycles from
- *			Activate to Activate for a different bank, minus one.
- *			For an 8-bank, this field must be equal to
- *			((tFAW/(4*tCK))-1).
- *	2:0 REG_T_WTR 	Minimum number of m_clk cycles from last Write
- */
+#define SDRAM_REF_CTRL_OPP100		0x0000030c
 #define SDRAM_TIM_1			0x04442049
-#define SDRAM_TIM_1_OPP100		0x0CA8D51A
-
-/*
- *	30:28 REG_T_XP		Minimum number of m_clk cycles from
- *				Powerdown exit to any command other than a
- *				Read command, minus one.
- *	24:16 REG_T_XSNR	Minimum number of m_clk cycles from Self-Refresh
- *				exit to any command other than a Read command,
- *				minusone. REG_T_XSNR and REG_T_XSRD must be
- *				programmed with the same value.
- *	15:6 REG_T_XSRD		Minimum number of m_clk cycles from Self-Refresh
- *				exit to a Read command,
- *				minus one. REG_T_XSNR and REG_T_XSRD must be
- *				programmed with the same value.
- *	5:3 REG_T_RTP		Minimum number of m_clk cycles for the last
- *				read command to a Pre-charge command, minus one.
- */
+#define SDRAM_TIM_1_OPP100		0x10eb066A
 #define SDRAM_TIM_2			0x1002008A
-#define SDRAM_TIM_2_OPP100		0x202E0B92
-
-/*
- *	23:21 REG_T_CKESR	Minimum number of m_clk cycles for which LPDDR2
- *				must remain in Self Refresh, minus one.
- *	20:15 REG_ZQ_ZQCS 	Number of m_clk clock cycles for a ZQCS command
- *				minus one.
- *	14:13 REG_T_TDQSCKMAX 	Number of m_clk that satisfies tDQSCKmax for
- *				LPDDR2,minus one.
- *	12:4  REG_T_RFC 	Minimum number of m_clk cycles from Refresh or
- *				 Load
- *				Mode to Refresh or Activate, minus one.
- *	3:0 REG_T_RAS_MAX 	Maximum number of reg_refresh_rate intervals
- *				from Activate to Precharge command. This field
- *				must be equal to ((tRASmax / tREFI)-1)
- *				rounded down to the next lower integer.
- *				Value for REG_T_RAS_MAX can be calculated as
- *				follows:
- *				If tRASmax = 120 us and tREFI = 15.7 us, then
- *				REG_T_RAS_MAX = ((120/15.7)-1) = 6.64.
- *				Round down to the next lower integer.
- *				Therefore, the programmed value must be 6
- */
+#define SDRAM_TIM_2_OPP100		0x20370dd2
 #define SDRAM_TIM_3			0x0040802F
-#define SDRAM_TIM_3_OPP100		0x008EA2BF
+#define SDRAM_TIM_3_OPP100		0x00b1c33f
 #define SDRAM_CONFIG_INIT		0x80800EB1
-#define SDRAM_CONFIG_FINAL		0x80801AB1
-#define DDR_PHY_CTRL_1_INIT		0x849FFFF4
-#define DDR_PHY_CTRL_1_OPP100_INIT	0x849FF404
+#define SDRAM_CONFIG_FINAL		0x98801ab1
+#define DDR_PHY_CTRL_1_INIT		0x849FFFF5
 #define DDR_PHY_CTRL_1_FINAL		0x849FFFF8
-#define DDR_PHY_CTRL_1_OPP100_FINAL	0x849FF408
+#define DDR_PHY_CTRL_1_OPP100		0x849FF408
 #define DDR_PHY_CTRL_2			0x00000000
-#define READ_IDLE_CTRL			0x000501FF
-#define READ_IDLE_CTRL_OPP100		0x000501FF
-#define PWR_MGMT_CTRL			0x40000000
-#define PWR_MGMT_CTRL_OPP100		0x80000000
-
-#else /* DDR @ 380.928 MHz */
- 
-#define SDRAM_REF_CTRL                  0x0000004A
-#define SDRAM_REF_CTRL_OPP100           0x000005CD
-#define SDRAM_TIM_1                     0x04442049
-#define SDRAM_TIM_1_OPP100              0x10EB065A
-#define SDRAM_TIM_2                     0x1002008A
-#define SDRAM_TIM_2_OPP100              0x20370DD2
-#define SDRAM_TIM_3                     0x0040802F
-#define SDRAM_TIM_3_OPP100              0x008EA2BF
-#define SDRAM_CONFIG_INIT               0x80800EB1
-#define SDRAM_CONFIG_FINAL              0x80801AB1
-#define DDR_PHY_CTRL_1_INIT             0x849FFFF4
-#define DDR_PHY_CTRL_1_OPP100_INIT      0x849FF404
-#define DDR_PHY_CTRL_1_FINAL            0x849FFFF8
-#define DDR_PHY_CTRL_1_OPP100_FINAL     0x849FF408
-#define DDR_PHY_CTRL_2                  0x00000000
-#define READ_IDLE_CTRL                  0x000501FF
-#define READ_IDLE_CTRL_OPP100           0x000501FF
-#define PWR_MGMT_CTRL                   0x40000000
-#define PWR_MGMT_CTRL_OPP100            0x80000000
-#endif
-
-#else /* ES1.0 */
-/* TODO: ES1.0 OPP100 valuse are still not popullated
- * 600 MHz/200 MHz
- */
-#define SDRAM_REF_CTRL			0x0000004A
-#define SDRAM_REF_CTRL_OPP100		0x0000050E
-#define SDRAM_TIM_1			0x04442049
-#define SDRAM_TIM_1_OPP100		0x0CA8D51A
-#define SDRAM_TIM_2			0x1002008A
-#define SDRAM_TIM_2_OPP100		0x202E0B92
-#define SDRAM_TIM_3			0x0040802F
-#define SDRAM_TIM_3_OPP100		0x008EA2BF
-#define SDRAM_CONFIG_INIT		0x80800EB1
-#define SDRAM_CONFIG_FINAL		0x80801AB1
-#define DDR_PHY_CTRL_1_INIT		0x849FFFF4
-#define DDR_PHY_CTRL_1_OPP100_INIT	0x849FF404
-#define DDR_PHY_CTRL_1_FINAL		0x849FFFF8
-#define DDR_PHY_CTRL_1_OPP100_FINAL	0x849FF408
-#define DDR_PHY_CTRL_2			0x00000000
-#define READ_IDLE_CTRL			0x000501FF
-#define READ_IDLE_CTRL_OPP100		0x000501FF
-#define PWR_MGMT_CTRL			0x80000000
-#define PWR_MGMT_CTRL_OPP100		0x00000000
-
-#endif
+#define READ_IDLE_CTRL			0x00050139
+#define READ_IDLE_CTRL_OPP100		0x00050139
+#define PWR_MGMT_CTRL			0x4000000f
+#define PWR_MGMT_CTRL_OPP100		0x4000000f
+#define ZQ_CONFIG			0x50073214
 
 
 /*******************************************************
@@ -270,6 +157,14 @@ static inline void delay(unsigned long loops)
 {
 	__asm__ volatile ("1:\n" "subs %0, %1, #1\n"
 			  "bne 1b" : "=r" (loops) : "0"(loops));
+}
+
+
+void big_delay(unsigned int count)
+{
+	int i;
+	for (i=0; i<count; i++)
+		delay(1);
 }
 
 /* TODO: FREQ update method is not working so shadow registers programming
@@ -295,7 +190,7 @@ static int emif_config(unsigned int base)
 	/* PHY control values */
 	*(volatile int*)(base + EMIF_DDR_PHY_CTRL_1) = DDR_PHY_CTRL_1_INIT;
 	*(volatile int*)(base + EMIF_DDR_PHY_CTRL_1_SHDW)= 		\
-						DDR_PHY_CTRL_1_OPP100_INIT;
+						DDR_PHY_CTRL_1_OPP100;
 	*(volatile int*)(base + EMIF_DDR_PHY_CTRL_2) = DDR_PHY_CTRL_2;
 
 	/*
@@ -322,6 +217,7 @@ static int emif_config(unsigned int base)
 	*(volatile int*)(base + EMIF_SDRAM_TIM_3) = SDRAM_TIM_3;
 	*(volatile int*)(base + EMIF_SDRAM_TIM_3_SHDW) = SDRAM_TIM_3_OPP100;
 
+	*(volatile int*)(base + EMIF_ZQ_CONFIG) = ZQ_CONFIG;
 	/*
 	 * EMIF_PWR_MGMT_CTRL
 	 */
@@ -333,12 +229,14 @@ static int emif_config(unsigned int base)
 	 * REG_REFRESH_EN[30] = 1 -- Refresh enable after MRW
 	 * REG_ADDRESS[7:0] = 00 -- Refresh enable after MRW
 	 */
-
+	big_delay(1000);
+#if 0
 	*(volatile int*)(base + EMIF_LPDDR2_MODE_REG_CFG) = MR0_ADDR;
 	do
 	{
 		reg_value = *(volatile int*)(base + EMIF_LPDDR2_MODE_REG_DATA);
 	} while((reg_value & 0x1) != 0);
+#endif
 
 	/* set MR10 register */
 	*(volatile int*)(base + EMIF_LPDDR2_MODE_REG_CFG)= MR10_ADDR;
@@ -357,8 +255,6 @@ static int emif_config(unsigned int base)
 	/* Set SDRAM CONFIG register again here with final RL-WL value */
 	*(volatile int*)(base + EMIF_SDRAM_CONFIG) = SDRAM_CONFIG_FINAL;
 	*(volatile int*)(base + EMIF_DDR_PHY_CTRL_1) = DDR_PHY_CTRL_1_FINAL;
-	*(volatile int*)(base + EMIF_DDR_PHY_CTRL_1_SHDW)= 		\
-						DDR_PHY_CTRL_1_OPP100_FINAL;
 
 	/*
 	 * EMIF_SDRAM_REF_CTRL
@@ -388,7 +284,7 @@ static int emif_reconfig(unsigned int base)
 
 	/* PHY control values */
 	*(volatile int*)(base + EMIF_DDR_PHY_CTRL_1) 			\
-						= DDR_PHY_CTRL_1_OPP100_FINAL;
+						= DDR_PHY_CTRL_1_OPP100;
 	*(volatile int*)(base + EMIF_DDR_PHY_CTRL_2) = DDR_PHY_CTRL_2;
 
 	/*
@@ -434,18 +330,45 @@ static int emif_reconfig(unsigned int base)
  *****************************************/
 static void ddr_init(void)
 {
-	unsigned int base_addr;
+	unsigned int base_addr, rev;
+	rev = omap_revision();
 
-	/* Configurte the Control Module DDRIO device */
-	__raw_writel(0x1c1c1c1c, 0x4A100638);
-	__raw_writel(0x1c1c1c1c, 0x4A10063c);
-	__raw_writel(0x1c1c1c1c, 0x4A100640);
-	__raw_writel(0x1c1c1c1c, 0x4A100648);
-	__raw_writel(0x1c1c1c1c, 0x4A10064c);
-	__raw_writel(0x1c1c1c1c, 0x4A100650);
+	if(rev == OMAP4430_ES2_0)
+	{
+		__raw_writel(0x9e9e9e9e, 0x4A100638);
+		__raw_writel(0x9e9e9e9e, 0x4A10063c);
+		__raw_writel(0x9e9e9e9e, 0x4A100640);
+		__raw_writel(0x9e9e9e9e, 0x4A100648);
+		__raw_writel(0x9e9e9e9e, 0x4A10064c);
+		__raw_writel(0x9e9e9e9e, 0x4A100650);
+	}
+	else if(rev == OMAP4430_ES1_0)
+	{
+		/* Configurte the Control Module DDRIO device */
+		__raw_writel(0x1c1c1c1c, 0x4A100638);
+		__raw_writel(0x1c1c1c1c, 0x4A10063c);
+		__raw_writel(0x1c1c1c1c, 0x4A100640);
+		__raw_writel(0x1c1c1c1c, 0x4A100648);
+		__raw_writel(0x1c1c1c1c, 0x4A10064c);
+		__raw_writel(0x1c1c1c1c, 0x4A100650);
+	}
 
 	/* LPDDR2IO set to NMOS PTV */
 	__raw_writel(0x00ffc000, 0x4A100704);
+
+
+	/*
+	 * DMM Configuration
+	 */
+
+	/* Both EMIFs 128 byte interleaved*/
+	*(volatile int*)(DMM_BASE + DMM_LISA_MAP_0) = 0x80540300;
+
+	/* EMIF2 only at 0x90000000 */
+	//*(volatile int*)(DMM_BASE + DMM_LISA_MAP_1) = 0x90400200;
+
+	*(volatile int*)(DMM_BASE + DMM_LISA_MAP_2) = 0x00000000;
+	*(volatile int*)(DMM_BASE + DMM_LISA_MAP_3) = 0xFF020100;
 
 	/* DDR needs to be initialised @ 19.2 MHz
 	 * So put core DPLL in bypass mode
@@ -509,7 +432,6 @@ static void ddr_init(void)
         sr32(CM_MEMIF_EMIF_2_CLKCTRL, 0, 32, 0x1);
 
 	/* Put the Core Subsystem PD to ON State */
-	sr32(CM_MEMIF_EMIF_2_CLKCTRL, 0, 32, 0x30E03);
 
 	/* No IDLE: BUG in SDC */
 	//sr32(CM_MEMIF_CLKSTCTRL, 0, 32, 0x2);
@@ -541,16 +463,12 @@ static void ddr_init(void)
 	 * [9:8] SDRC_MAP 		0x3
 	 * [7:0] SDRC_ADDR		0X0
 	 */
-	/* 256 MB configeration */
-	/*(volatile int*)(DMM_BASE + DMM_LISA_MAP_0) = 0x80400200; */
-	/* 512MB configeration */
-	*(volatile int*)(DMM_BASE + DMM_LISA_MAP_0) = 0x80540300;
-	/* TODO: Settings can be locked but kept open for TILER */
-	*(volatile int*)(DMM_BASE + DMM_LISA_MAP_1) = 0x00000000;
-	*(volatile int*)(DMM_BASE + DMM_LISA_MAP_2) = 0x00000000;
-	/* Invalid address TRAP */
-	*(volatile int*)(DMM_BASE + DMM_LISA_MAP_3) = 0xFF020100;
+	reset_phy(EMIF1_BASE);
+	reset_phy(EMIF2_BASE);
 
+	*((volatile int *)0x80000000) = 0;
+	*((volatile int *)0x80000080) = 0;
+	//*((volatile int *)0x90000000) = 0;
 }
 /*****************************************
  * Routine: board_init
@@ -621,9 +539,10 @@ void try_unlock_memory(void)
 }
 
 
-#ifdef CONFIG_MPU_600	
+#if defined(CONFIG_MPU_600) || defined(CONFIG_MPU_1000)
 static scale_vcores(void)
 {
+	unsigned int rev = omap_revision();
 	/* For VC bypass only VCOREx_CGF_FORCE  is necessary and
 	 * VCOREx_CFG_VOLTAGE  changes can be discarded
 	 */
@@ -634,7 +553,10 @@ static scale_vcores(void)
 
 	/* set VCORE1 force VSEL */
 	/* PRM_VC_VAL_BYPASS) */
-	*(volatile int*)(0x4A307BA0) = 0x395512;
+        if(rev == OMAP4430_ES1_0)
+		*(volatile int*)(0x4A307BA0) = 0x3B5512;
+	else
+		*(volatile int*)(0x4A307BA0) = 0x3A5512;
 	*(volatile int*)(0x4A307BA0) |= 0x1000000;
 	while((*(volatile int*)(0x4A307BA0)) & 0x1000000);
 
@@ -644,7 +566,10 @@ static scale_vcores(void)
 
 	/* FIXME: set VCORE2 force VSEL, Check the reset value */
 	/* PRM_VC_VAL_BYPASS) */
-	*(volatile int*)(0x4A307BA0) = 0x315B12;
+        if(rev == OMAP4430_ES1_0)
+		*(volatile int*)(0x4A307BA0) = 0x315B12;
+	else
+		*(volatile int*)(0x4A307BA0) = 0x295B12;
 	*(volatile int*)(0x4A307BA0) |= 0x1000000;
 	while((*(volatile int*)(0x4A307BA0)) & 0x1000000);
 
@@ -653,7 +578,10 @@ static scale_vcores(void)
 
 	/*/set VCORE3 force VSEL */
 	/* PRM_VC_VAL_BYPASS */
-	*(volatile int*)(0x4A307BA0) = 0x316112;
+        if(rev == OMAP4430_ES1_0)
+		*(volatile int*)(0x4A307BA0) = 0x316112;
+	else
+		*(volatile int*)(0x4A307BA0) = 0x296112;
 	*(volatile int*)(0x4A307BA0) |= 0x1000000;
 	while((*(volatile int*)(0x4A307BA0)) & 0x1000000);
 
@@ -671,6 +599,8 @@ static scale_vcores(void)
 
 void s_init(void)
 {
+	unsigned int rev = omap_revision();
+
 	set_muxconf_regs();
 	delay(100);
 
@@ -683,10 +613,27 @@ void s_init(void)
 	ddr_init();
 
 /* Set VCORE1 = 1.3 V, VCORE2 = VCORE3 = 1.21V */
-#ifdef CONFIG_MPU_600	
+#if defined(CONFIG_MPU_600) || defined(CONFIG_MPU_1000)
 	scale_vcores();
 #endif	
 	prcm_init();
+
+	if(rev == OMAP4430_ES2_0) {
+		if (__raw_readl(0x4805D138) & (1<<22)) {
+			sr32(0x4A30a31C, 8, 1, 0x1);  /* enable software ioreq */
+			sr32(0x4A30a31C, 1, 2, 0x0);  /* set for sys_clk (38.4MHz) */
+			sr32(0x4A30a31C, 16, 4, 0x1); /* set divisor to 2 */
+			sr32(0x4A30a110, 0, 1, 0x1);  /* set the clock source to active */
+			sr32(0x4A30a110, 2, 2, 0x3);  /* enable clocks */
+		}
+		else {
+			sr32(0x4A30a314, 8, 1, 0x1); /* enable software ioreq */
+			sr32(0x4A30a314, 1, 2, 0x2); /* set for PER_DPLL */
+			sr32(0x4A30a314, 16, 4, 0xf); /* set divisor to 16 */
+			sr32(0x4A30a110, 0, 1, 0x1); /* set the clock source to active */
+			sr32(0x4A30a110, 2, 2, 0x3); /* enable clocks */
+		}
+	}
 
 }
 
@@ -787,7 +734,7 @@ int dram_init(void)
 	MV(CP(GPMC_A19) , ( PTU | IEN | OFF_EN | OFF_PD | OFF_IN | M1))  /* kpd_row7 */ \
 	MV(CP(GPMC_A20) , ( IEN | M3))  /* gpio_44 */ \
 	MV(CP(GPMC_A21) , ( M3))  /* gpio_45 */ \
-	MV(CP(GPMC_A22) , ( OFF_EN | OFF_PD | OFF_IN | M1))  /* kpd_col6 */ \
+	MV(CP(GPMC_A22) , ( M3))  /* gpio_46 */ \
 	MV(CP(GPMC_A23) , ( OFF_EN | OFF_PD | OFF_IN | M1))  /* kpd_col7 */ \
 	MV(CP(GPMC_A24) , ( PTD | M3))  /* gpio_48 */ \
 	MV(CP(GPMC_A25) , ( PTD | M3))  /* gpio_49 */ \
@@ -803,9 +750,9 @@ int dram_init(void)
 	MV(CP(GPMC_NBE0_CLE) , ( M3))  /* gpio_59 */ \
 	MV(CP(GPMC_NBE1) , ( PTD | M3))  /* gpio_60 */ \
 	MV(CP(GPMC_WAIT0) , ( PTU | IEN | M3))  /* gpio_61 */ \
-	MV(CP(GPMC_WAIT1) , ( IEN | M3))  /* gpio_62 */ \
+	MV(CP(GPMC_WAIT1),	(PTD | OFF_EN | OFF_PD | OFF_OUT_PTD | M3)) /* gpio_62 */ \
 	MV(CP(C2C_DATA11) , ( PTD | M3))  /* gpio_100 */ \
-	MV(CP(C2C_DATA12) , ( M1))  /* dsi1_te0 */ \
+	MV(CP(C2C_DATA12) , ( PTD | IEN | M3))  /* gpio_101 */ \
 	MV(CP(C2C_DATA13) , ( PTD | M3))  /* gpio_102 */ \
 	MV(CP(C2C_DATA14) , ( M1))  /* dsi2_te0 */ \
 	MV(CP(C2C_DATA15) , ( PTD | M3))  /* gpio_104 */ \
@@ -923,12 +870,12 @@ int dram_init(void)
 	MV(CP(USBB2_ULPITLL_DAT7) , ( IEN | M5))  /* dispc2_data11 */ \
 	MV(CP(USBB2_HSIC_DATA) , ( PTD | OFF_EN | OFF_OUT_PTU | M3))  /* gpio_169 */ \
 	MV(CP(USBB2_HSIC_STROBE) , ( PTD | OFF_EN | OFF_OUT_PTU | M3))  /* gpio_170 */ \
-	MV(CP(UNIPRO_TX0) , ( OFF_EN | OFF_PD | OFF_IN | M1))  /* kpd_col0 */ \
+	MV(CP(UNIPRO_TX0) , ( PTD | IEN | M3))  /* gpio_171 */ \
 	MV(CP(UNIPRO_TY0) , ( OFF_EN | OFF_PD | OFF_IN | M1))  /* kpd_col1 */ \
 	MV(CP(UNIPRO_TX1) , ( OFF_EN | OFF_PD | OFF_IN | M1))  /* kpd_col2 */ \
 	MV(CP(UNIPRO_TY1) , ( OFF_EN | OFF_PD | OFF_IN | M1))  /* kpd_col3 */ \
-	MV(CP(UNIPRO_TX2) , ( OFF_EN | OFF_PD | OFF_IN | M3))  /* gpio_0 */ \
-	MV(CP(UNIPRO_TY2) , ( OFF_EN | OFF_PD | OFF_IN | M3))  /* gpio_1 */ \
+	MV(CP(UNIPRO_TX2) , ( PTU | IEN | M3))  /* gpio_0 */ \
+	MV(CP(UNIPRO_TY2) , ( PTU | IEN | M3))  /* gpio_1 */ \
 	MV(CP(UNIPRO_RX0) , ( PTU | IEN | OFF_EN | OFF_PD | OFF_IN | M1))  /* kpd_row0 */ \
 	MV(CP(UNIPRO_RY0) , ( PTU | IEN | OFF_EN | OFF_PD | OFF_IN | M1))  /* kpd_row1 */ \
 	MV(CP(UNIPRO_RX1) , ( PTU | IEN | OFF_EN | OFF_PD | OFF_IN | M1))  /* kpd_row2 */ \
@@ -939,7 +886,7 @@ int dram_init(void)
 	MV(CP(USBA0_OTG_DP) , ( IEN | OFF_EN | OFF_PD | OFF_IN | M0))  /* usba0_otg_dp */ \
 	MV(CP(USBA0_OTG_DM) , ( IEN | OFF_EN | OFF_PD | OFF_IN | M0))  /* usba0_otg_dm */ \
 	MV(CP(FREF_CLK1_OUT) , ( M0))  /* fref_clk1_out */ \
-	MV(CP(FREF_CLK2_OUT) , ( M0))  /* fref_clk2_out */ \
+	MV(CP(FREF_CLK2_OUT) , ( PTD | IEN | M3))  /* gpio_182 */ \
 	MV(CP(SYS_NIRQ1) , ( PTU | IEN | M0))  /* sys_nirq1 */ \
 	MV(CP(SYS_NIRQ2) , ( PTU | IEN | M0))  /* sys_nirq2 */ \
 	MV(CP(SYS_BOOT0) , ( PTU | IEN | M3))  /* gpio_184 */ \
@@ -990,13 +937,10 @@ int dram_init(void)
 	MV1(WK(PAD1_SYS_PWRON_RESET) , ( M3))  /* gpio_wk29 */ \
 	MV1(WK(PAD0_SYS_BOOT6) , ( IEN | M3))  /* gpio_wk9 */ \
 	MV1(WK(PAD1_SYS_BOOT7) , ( IEN | M3))  /* gpio_wk10 */ \
-//	MV1(WK(PAD0_JTAG_NTRST) , ( IEN | M0))  /* jtag_ntrst */ \
-	MV1(WK(PAD1_JTAG_TCK) , ( IEN | M0))  /* jtag_tck */ \
-	MV1(WK(PAD0_JTAG_RTCK) , ( M0))  /* jtag_rtck */ \
-	MV1(WK(PAD1_JTAG_TMS_TMSC) , ( IEN | M0))  /* jtag_tms_tmsc */ \
-	MV1(WK(PAD0_JTAG_TDI) , ( IEN | M0))  /* jtag_tdi */ \
-	MV1(WK(PAD1_JTAG_TDO) , ( M0))  /* jtag_tdo */ 
- 
+	MV1(WK(PAD1_FREF_CLK3_REQ),     (M3)) /* gpio_wk30 */ \
+	MV1(WK(PAD1_FREF_CLK4_REQ),     (M3)) /* gpio_wk7 */ \
+	MV1(WK(PAD0_FREF_CLK4_OUT),     (M3)) /* gpio_wk8 */
+
 #define MUX_DEFAULT_OMAP4_ALL() \
   	MV(CP(GPMC_AD0),	(PTU | IEN | OFF_EN | OFF_PD | OFF_IN | M1)) /* sdmmc2_dat0 */ \
 	MV(CP(GPMC_AD1),	(PTU | IEN | OFF_EN | OFF_PD | OFF_IN | M1)) /* sdmmc2_dat1 */ \
@@ -1036,7 +980,7 @@ int dram_init(void)
 	MV(CP(GPMC_NBE0_CLE),	(M0)) /* gpmc_nbe0_cle*/ \
 	MV(CP(GPMC_NBE1),	(M3_SAFE)) /* gpio_60 */ \
 	MV(CP(GPMC_WAIT0),	(M0)) /* gpmc_wait */ \
-	MV(CP(GPMC_WAIT1),	(M3_SAFE)) /* gpio_62 */ \
+	MV(CP(GPMC_WAIT1),	(PTD | OFF_EN | OFF_PD | OFF_OUT_PTD | M3)) /* gpio_39 */ \
 	MV(CP(C2C_DATA11),	(M3_SAFE)) /* gpio_100 */ \
 	MV(CP(C2C_DATA12),	(M1_SAFE)) /* dsi1_te0 */ \
 	MV(CP(C2C_DATA13),	(M3_SAFE)) /* gpio_102 */ \
@@ -1223,7 +1167,6 @@ int dram_init(void)
 	MV1(WK(PAD1_SYS_PWRON_RESET),	(M3_SAFE)) /* gpio_wk29 */ \
 	MV1(WK(PAD0_SYS_BOOT6),	(M3_SAFE)) /* gpio_wk9 */ \
 	MV1(WK(PAD1_SYS_BOOT7),	(M3_SAFE)) /* gpio_wk10 */ \
-	//MV1(WK(PAD0_JTAG_NTRST),	(IEN | M0)) /* jtag_ntrst */ \
 	MV1(WK(PAD1_JTAG_TCK),	(IEN | M0)) /* jtag_tck */ \
 	MV1(WK(PAD0_JTAG_RTCK),	(M0)) /* jtag_rtck */ \
 	MV1(WK(PAD1_JTAG_TMS_TMSC),	(IEN | M0)) /* jtag_tms_tmsc */ \
@@ -1263,4 +1206,8 @@ void board_hang (void)
 int nand_init(void)
 {
 	return 0;
+}
+void reset_phy(unsigned int base)
+{
+	*(volatile int*)(base + IODFT_TLGC) |= (1 << 10);
 }
