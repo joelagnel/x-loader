@@ -1053,6 +1053,7 @@ int nand_init(void)
 	__raw_writel(0 , GPMC_CONFIG7 + GPMC_CONFIG_CS0);
 	delay(1000);
 
+#ifdef CFG_NAND_K9F1G08R0A
 	if ((get_mem_type() == GPMC_NAND) || (get_mem_type() == MMC_NAND)) {
 		__raw_writel(M_NAND_GPMC_CONFIG1, GPMC_CONFIG1 + GPMC_CONFIG_CS0);
 		__raw_writel(M_NAND_GPMC_CONFIG2, GPMC_CONFIG2 + GPMC_CONFIG_CS0);
@@ -1073,9 +1074,10 @@ int nand_init(void)
 #endif
 			return 1;
 		}
-
 	}
+#endif
 
+#ifdef CFG_ONENAND
 	if ((get_mem_type() == GPMC_ONENAND) || (get_mem_type() == MMC_ONENAND)) {
 		__raw_writel(ONENAND_GPMC_CONFIG1, GPMC_CONFIG1 + GPMC_CONFIG_CS0);
 		__raw_writel(ONENAND_GPMC_CONFIG2, GPMC_CONFIG2 + GPMC_CONFIG_CS0);
@@ -1097,6 +1099,8 @@ int nand_init(void)
 			return 1;
 		}
 	}
+#endif
+
 	return 0;
 }
 
