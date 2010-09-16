@@ -49,7 +49,9 @@ int print_info(void)
 static int init_func_i2c (void)
 {
 #ifdef CONFIG_MMC
+#ifdef CONFIG_DRIVER_OMAP34XX_I2C
 	i2c_init (CFG_I2C_SPEED, CFG_I2C_SLAVE);
+#endif
 #endif
 	return 0;
 }
@@ -65,7 +67,9 @@ init_fnc_t *init_sequence[] = {
 	print_info,
   	nand_init,		/* board specific nand init */
 #ifdef CONFIG_MMC
+#ifdef CONFIG_DRIVER_OMAP34XX_I2C
 	init_func_i2c,
+#endif
 #endif
   	NULL,
 };
@@ -87,6 +91,7 @@ void start_armboot (void)
 	misc_init_r();
 
 	buf =  (uchar*) CFG_LOADADDR;
+	*(int *)buf = 0xffffffff;
 
 #ifdef CONFIG_MMC
 	/* first try mmc */
@@ -104,6 +109,7 @@ void start_armboot (void)
 	if (buf == (uchar *)CFG_LOADADDR) {
 		/* if no u-boot on mmc, try onenand or nand, depending upon sysboot */
 		if (get_mem_type() == GPMC_ONENAND){
+#ifdef CFG_ONENAND
 #ifdef CFG_PRINTF
        			printf("Loading u-boot.bin from onenand\n");
 #endif
@@ -111,7 +117,9 @@ void start_armboot (void)
         			if (!onenand_read_block(buf, i))
         				buf += ONENAND_BLOCK_SIZE;
         		}
+#endif
 		} else if (get_mem_type() == GPMC_NAND){
+#ifdef CFG_NAND_K9F1G08R0A
 #ifdef CFG_PRINTF
        			printf("Loading u-boot.bin from nand\n");
 #endif
@@ -119,6 +127,7 @@ void start_armboot (void)
         			if (!nand_read_block(buf, i))
         				buf += NAND_BLOCK_SIZE; /* advance buf ptr */
         		}
+#endif
 		}
 	}
 
