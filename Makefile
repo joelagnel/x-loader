@@ -157,6 +157,12 @@ omap3530beagle_config :    unconfig
 	@./mkconfig $(@:_config=) arm omap3 omap3530beagle
 
 #########################################################################
+## OMAP4 (ARM-CortexA9) Systems
+#########################################################################
+omap4430panda_config :    unconfig
+	@./mkconfig $(@:_config=) arm omap4 omap4430panda
+
+#########################################################################
 
 clean:
 	find . -type f \
