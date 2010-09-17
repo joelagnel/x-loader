@@ -128,26 +128,83 @@
  * should be programmed for new OPP.
  */
 /* Elpida 2x2Gbit */
-#define SDRAM_REF_CTRL			0x0000004A
-#define SDRAM_REF_CTRL_OPP100		0x0000030c
-#define SDRAM_TIM_1			0x04442049
-#define SDRAM_TIM_1_OPP100		0x10eb066A
-#define SDRAM_TIM_2			0x1002008A
-#define SDRAM_TIM_2_OPP100		0x20370dd2
-#define SDRAM_TIM_3			0x0040802F
-#define SDRAM_TIM_3_OPP100		0x00b1c33f
 #define SDRAM_CONFIG_INIT		0x80800EB1
-#define SDRAM_CONFIG_FINAL		0x98801ab1
 #define DDR_PHY_CTRL_1_INIT		0x849FFFF5
-#define DDR_PHY_CTRL_1_FINAL		0x849FFFF8
-#define DDR_PHY_CTRL_1_OPP100		0x849FF408
-#define DDR_PHY_CTRL_2			0x00000000
-#define READ_IDLE_CTRL			0x00050139
-#define READ_IDLE_CTRL_OPP100		0x00050139
+#define READ_IDLE_CTRL			0x000501FF
 #define PWR_MGMT_CTRL			0x4000000f
 #define PWR_MGMT_CTRL_OPP100		0x4000000f
-#define ZQ_CONFIG			0x50073214
+#define ZQ_CONFIG			0x500b3215
 
+#define CS1_MR(mr)	((mr) | 0x80000000)
+struct ddr_regs{
+	u32 tim1;
+	u32 tim2;
+	u32 tim3;
+	u32 phy_ctrl_1;
+	u32 ref_ctrl;
+	u32 config_init;
+	u32 config_final;
+	u32 zq_config;
+	u8 mr1;
+	u8 mr2;
+};
+const struct ddr_regs ddr_regs_380_mhz = {
+	.tim1		= 0x10cb061a,
+	.tim2		= 0x20350d52,
+	.tim3		= 0x00b1431f,
+	.phy_ctrl_1	= 0x849FF408,
+	.ref_ctrl	= 0x000005ca,
+	.config_init	= 0x80000eb1,
+	.config_final	= 0x80001ab1,
+	.zq_config	= 0x500b3215,
+	.mr1		= 0x83,
+	.mr2		= 0x4
+};
+
+/*
+ * Unused timings - but we may need them later
+ * Keep them commented
+ */
+#if 0
+const struct ddr_regs ddr_regs_400_mhz = {
+	.tim1		= 0x10eb065a,
+	.tim2		= 0x20370dd2,
+	.tim3		= 0x00b1c33f,
+	.phy_ctrl_1	= 0x849FF408,
+	.ref_ctrl	= 0x00000618,
+	.config_init	= 0x80000eb1,
+	.config_final	= 0x80001ab1,
+	.zq_config	= 0x500b3215,
+	.mr1		= 0x83,
+	.mr2		= 0x4
+};
+
+const struct ddr_regs ddr_regs_200_mhz = {
+	.tim1		= 0x08648309,
+	.tim2		= 0x101b06ca,
+	.tim3		= 0x0048a19f,
+	.phy_ctrl_1	= 0x849FF405,
+	.ref_ctrl	= 0x0000030c,
+	.config_init	= 0x80000eb1,
+	.config_final	= 0x80000eb1,
+	.zq_config	= 0x500b3215,
+	.mr1		= 0x23,
+	.mr2		= 0x1
+};
+#endif
+
+const struct ddr_regs ddr_regs_200_mhz_2cs = {
+	.tim1		= 0x08648309,
+	.tim2		= 0x101b06ca,
+	.tim3		= 0x0048a19f,
+	.phy_ctrl_1	= 0x849FF405,
+	.ref_ctrl	= 0x0000030c,
+	.config_init	= 0x80000eb9,
+	.config_final	= 0x80000eb9,
+	.zq_config	= 0xD00b3215,
+	.mr1		= 0x23,
+	.mr2		= 0x1
+};
 
 /*******************************************************
  * Routine: delay
@@ -173,8 +230,14 @@ void big_delay(unsigned int count)
  */
 static int emif_config(unsigned int base)
 {
-	unsigned int reg_value;
+	unsigned int reg_value, rev;
+	const struct ddr_regs *ddr_regs;
+	rev = omap_revision();
 
+	if(rev == OMAP4430_ES1_0)
+		ddr_regs = &ddr_regs_380_mhz;
+	else if (rev == OMAP4430_ES2_0)
+		ddr_regs = &ddr_regs_200_mhz_2cs;
 	/*
 	 * set SDRAM CONFIG register
 	 * EMIF_SDRAM_CONFIG[31:29] REG_SDRAM_TYPE = 4 for LPDDR2-S4
@@ -185,39 +248,38 @@ static int emif_config(unsigned int base)
  	 * EMIF_SDRAM_CONFIG[2:0] REG_PAGESIZE = 2  - 512- 9 column
 	 * JDEC specs - S4-2Gb --8 banks -- R0-R13, C0-c8
 	 */
-	*(volatile int*)(base + EMIF_SDRAM_CONFIG) = SDRAM_CONFIG_INIT;
+	*(volatile int*)(base + EMIF_LPDDR2_NVM_CONFIG) &= 0xBFFFFFFF;
+	*(volatile int*)(base + EMIF_SDRAM_CONFIG) = ddr_regs->config_init;
 
 	/* PHY control values */
 	*(volatile int*)(base + EMIF_DDR_PHY_CTRL_1) = DDR_PHY_CTRL_1_INIT;
-	*(volatile int*)(base + EMIF_DDR_PHY_CTRL_1_SHDW)= 		\
-						DDR_PHY_CTRL_1_OPP100;
-	*(volatile int*)(base + EMIF_DDR_PHY_CTRL_2) = DDR_PHY_CTRL_2;
+	*(volatile int*)(base + EMIF_DDR_PHY_CTRL_1_SHDW)= ddr_regs->phy_ctrl_1;
 
 	/*
 	 * EMIF_READ_IDLE_CTRL
 	 */
 	*(volatile int*)(base + EMIF_READ_IDLE_CTRL) = READ_IDLE_CTRL;
-	*(volatile int*)(base + EMIF_READ_IDLE_CTRL_SHDW) = READ_IDLE_CTRL_OPP100;
+	*(volatile int*)(base + EMIF_READ_IDLE_CTRL_SHDW) = READ_IDLE_CTRL;
 
 	/*
 	 * EMIF_SDRAM_TIM_1
 	 */
-	*(volatile int*)(base + EMIF_SDRAM_TIM_1) = SDRAM_TIM_1;
-	*(volatile int*)(base + EMIF_SDRAM_TIM_1_SHDW) = SDRAM_TIM_1_OPP100;
+	*(volatile int*)(base + EMIF_SDRAM_TIM_1) = ddr_regs->tim1;
+	*(volatile int*)(base + EMIF_SDRAM_TIM_1_SHDW) = ddr_regs->tim1;
 
 	/*
 	 * EMIF_SDRAM_TIM_2
 	 */
-	*(volatile int*)(base + EMIF_SDRAM_TIM_2) = SDRAM_TIM_2;
-	*(volatile int*)(base + EMIF_SDRAM_TIM_2_SHDW) = SDRAM_TIM_2_OPP100;
+	*(volatile int*)(base + EMIF_SDRAM_TIM_2) = ddr_regs->tim2;
+	*(volatile int*)(base + EMIF_SDRAM_TIM_2_SHDW) = ddr_regs->tim2;
 
 	/*
 	 * EMIF_SDRAM_TIM_3
 	 */
-	*(volatile int*)(base + EMIF_SDRAM_TIM_3) = SDRAM_TIM_3;
-	*(volatile int*)(base + EMIF_SDRAM_TIM_3_SHDW) = SDRAM_TIM_3_OPP100;
+	*(volatile int*)(base + EMIF_SDRAM_TIM_3) = ddr_regs->tim3;
+	*(volatile int*)(base + EMIF_SDRAM_TIM_3_SHDW) = ddr_regs->tim3;
 
-	*(volatile int*)(base + EMIF_ZQ_CONFIG) = ZQ_CONFIG;
+	*(volatile int*)(base + EMIF_ZQ_CONFIG) = ddr_regs->zq_config;
 	/*
 	 * EMIF_PWR_MGMT_CTRL
 	 */
@@ -229,97 +291,59 @@ static int emif_config(unsigned int base)
 	 * REG_REFRESH_EN[30] = 1 -- Refresh enable after MRW
 	 * REG_ADDRESS[7:0] = 00 -- Refresh enable after MRW
 	 */
-	big_delay(1000);
-#if 0
+
 	*(volatile int*)(base + EMIF_LPDDR2_MODE_REG_CFG) = MR0_ADDR;
-	do
-	{
+	do {
 		reg_value = *(volatile int*)(base + EMIF_LPDDR2_MODE_REG_DATA);
-	} while((reg_value & 0x1) != 0);
-#endif
+	} while ((reg_value & 0x1) != 0);
+
+	*(volatile int*)(base + EMIF_LPDDR2_MODE_REG_CFG) = CS1_MR(MR0_ADDR);
+	do {
+		reg_value = *(volatile int*)(base + EMIF_LPDDR2_MODE_REG_DATA);
+	} while ((reg_value & 0x1) != 0);
+
 
 	/* set MR10 register */
 	*(volatile int*)(base + EMIF_LPDDR2_MODE_REG_CFG)= MR10_ADDR;
 	*(volatile int*)(base + EMIF_LPDDR2_MODE_REG_DATA) = MR10_ZQINIT;
+	*(volatile int*)(base + EMIF_LPDDR2_MODE_REG_CFG) = CS1_MR(MR10_ADDR);
+	*(volatile int*)(base + EMIF_LPDDR2_MODE_REG_DATA) = MR10_ZQINIT;
+
 	/* wait for tZQINIT=1us  */
 	delay(10);
 
 	/* set MR1 register */
 	*(volatile int*)(base + EMIF_LPDDR2_MODE_REG_CFG)= MR1_ADDR;
-	*(volatile int*)(base + EMIF_LPDDR2_MODE_REG_DATA) = MR1_VALUE;
+	*(volatile int*)(base + EMIF_LPDDR2_MODE_REG_DATA) = ddr_regs->mr1;
+	*(volatile int*)(base + EMIF_LPDDR2_MODE_REG_CFG) = CS1_MR(MR1_ADDR);
+	*(volatile int*)(base + EMIF_LPDDR2_MODE_REG_DATA) = ddr_regs->mr1;
+
 
 	/* set MR2 register RL=6 for OPP100 */
 	*(volatile int*)(base + EMIF_LPDDR2_MODE_REG_CFG)= MR2_ADDR;
-	*(volatile int*)(base + EMIF_LPDDR2_MODE_REG_DATA) = MR2_RL6_WL3;
+	*(volatile int*)(base + EMIF_LPDDR2_MODE_REG_DATA) = ddr_regs->mr2;
+	*(volatile int*)(base + EMIF_LPDDR2_MODE_REG_CFG) = CS1_MR(MR2_ADDR);
+	*(volatile int*)(base + EMIF_LPDDR2_MODE_REG_DATA) = ddr_regs->mr2;
 
 	/* Set SDRAM CONFIG register again here with final RL-WL value */
-	*(volatile int*)(base + EMIF_SDRAM_CONFIG) = SDRAM_CONFIG_FINAL;
-	*(volatile int*)(base + EMIF_DDR_PHY_CTRL_1) = DDR_PHY_CTRL_1_FINAL;
+	*(volatile int*)(base + EMIF_SDRAM_CONFIG) = ddr_regs->config_final;
+	*(volatile int*)(base + EMIF_DDR_PHY_CTRL_1) = ddr_regs->phy_ctrl_1;
 
 	/*
 	 * EMIF_SDRAM_REF_CTRL
 	 * refresh rate = DDR_CLK / reg_refresh_rate
 	 * 3.9 uS = (400MHz)	/ reg_refresh_rate
 	 */
-	*(volatile int*)(base + EMIF_SDRAM_REF_CTRL) = SDRAM_REF_CTRL;
-	*(volatile int*)(base + EMIF_SDRAM_REF_CTRL_SHDW) = 		\
-							SDRAM_REF_CTRL_OPP100;
+	*(volatile int*)(base + EMIF_SDRAM_REF_CTRL) = ddr_regs->ref_ctrl;
+	*(volatile int*)(base + EMIF_SDRAM_REF_CTRL_SHDW) = ddr_regs->ref_ctrl;
 
 	/* set MR16 register */
 	*(volatile int*)(base + EMIF_LPDDR2_MODE_REG_CFG)= MR16_ADDR | REF_EN;
 	*(volatile int*)(base + EMIF_LPDDR2_MODE_REG_DATA) = 0;
+	*(volatile int*)(base + EMIF_LPDDR2_MODE_REG_CFG) =
+						 CS1_MR(MR16_ADDR | REF_EN);
+	*(volatile int*)(base + EMIF_LPDDR2_MODE_REG_DATA) = 0;
 	/* LPDDR2 init complete */
-
-}
-/* FREQ update method is not working so use Normal Reconfigure method
- * Shadow registers are programmed for completeness already in emif_config
- * fucntion @ 100 OPP
- * This fucntion popullated the 100% OPP values
- */
-static int emif_reconfig(unsigned int base)
-{
-	unsigned int reg_value;
-
-	*(volatile int*)(base + EMIF_SDRAM_CONFIG) = SDRAM_CONFIG_FINAL;
-
-	/* PHY control values */
-	*(volatile int*)(base + EMIF_DDR_PHY_CTRL_1) 			\
-						= DDR_PHY_CTRL_1_OPP100;
-	*(volatile int*)(base + EMIF_DDR_PHY_CTRL_2) = DDR_PHY_CTRL_2;
-
-	/*
-	 * EMIF_READ_IDLE_CTRL
-	 */
-	*(volatile int*)(base + EMIF_READ_IDLE_CTRL) = READ_IDLE_CTRL_OPP100;
-
-	/*
-	 * EMIF_SDRAM_TIM_1
-	 */
-	*(volatile int*)(base + EMIF_SDRAM_TIM_1) = SDRAM_TIM_1_OPP100;
-
-	/*
-	 * EMIF_SDRAM_TIM_2
-	 */
-	*(volatile int*)(base + EMIF_SDRAM_TIM_2) = SDRAM_TIM_2_OPP100;
-
-	/*
-	 * EMIF_SDRAM_TIM_3
-	 */
-	*(volatile int*)(base + EMIF_SDRAM_TIM_3) = SDRAM_TIM_3_OPP100;
-
-	/*
-	 * EMIF_PWR_MGMT_CTRL
-	 */
-	*(volatile int*)(base + EMIF_PWR_MGMT_CTRL) = PWR_MGMT_CTRL_OPP100;
-
-	/*
-	 * EMIF_SDRAM_REF_CTRL
-	 * refresh rate = DDR_CLK / reg_refresh_rate
-	 * 3.9 uS = (400MHz)	/ reg_refresh_rate
-	 */
-	*(volatile int*)(base + EMIF_SDRAM_REF_CTRL) = SDRAM_REF_CTRL_OPP100;
-
-	/* LPDDR2 init complete at 100 OPP*/
 
 }
 /*****************************************
@@ -333,16 +357,7 @@ static void ddr_init(void)
 	unsigned int base_addr, rev;
 	rev = omap_revision();
 
-	if(rev == OMAP4430_ES2_0)
-	{
-		__raw_writel(0x9e9e9e9e, 0x4A100638);
-		__raw_writel(0x9e9e9e9e, 0x4A10063c);
-		__raw_writel(0x9e9e9e9e, 0x4A100640);
-		__raw_writel(0x9e9e9e9e, 0x4A100648);
-		__raw_writel(0x9e9e9e9e, 0x4A10064c);
-		__raw_writel(0x9e9e9e9e, 0x4A100650);
-	}
-	else if(rev == OMAP4430_ES1_0)
+	if (rev == OMAP4430_ES1_0)
 	{
 		/* Configurte the Control Module DDRIO device */
 		__raw_writel(0x1c1c1c1c, 0x4A100638);
@@ -351,8 +366,14 @@ static void ddr_init(void)
 		__raw_writel(0x1c1c1c1c, 0x4A100648);
 		__raw_writel(0x1c1c1c1c, 0x4A10064c);
 		__raw_writel(0x1c1c1c1c, 0x4A100650);
+	} else if (rev == OMAP4430_ES2_0) {
+		__raw_writel(0x9e9e9e9e, 0x4A100638);
+		__raw_writel(0x9e9e9e9e, 0x4A10063c);
+		__raw_writel(0x9e9e9e9e, 0x4A100640);
+		__raw_writel(0x9e9e9e9e, 0x4A100648);
+		__raw_writel(0x9e9e9e9e, 0x4A10064c);
+		__raw_writel(0x9e9e9e9e, 0x4A100650);
 	}
-
 	/* LPDDR2IO set to NMOS PTV */
 	__raw_writel(0x00ffc000, 0x4A100704);
 
@@ -362,7 +383,10 @@ static void ddr_init(void)
 	 */
 
 	/* Both EMIFs 128 byte interleaved*/
-	*(volatile int*)(DMM_BASE + DMM_LISA_MAP_0) = 0x80540300;
+	if (rev == OMAP4430_ES1_0)
+		*(volatile int*)(DMM_BASE + DMM_LISA_MAP_0) = 0x80540300;
+	else if (rev == OMAP4430_ES2_0)
+		*(volatile int*)(DMM_BASE + DMM_LISA_MAP_0) = 0x80640300;
 
 	/* EMIF2 only at 0x90000000 */
 	//*(volatile int*)(DMM_BASE + DMM_LISA_MAP_1) = 0x90400200;
@@ -388,7 +412,6 @@ static void ddr_init(void)
 	/* Configure EMIF24D */
 	base_addr = EMIF2_BASE;
 	emif_config(base_addr);
-#ifdef FREQ_UPDATE_EMIF
 	/* Lock Core using shadow CM_SHADOW_FREQ_CONFIG1 */
 	lock_core_dpll_shadow();
 	/* TODO: SDC needs few hacks to get DDR freq update working */
@@ -405,29 +428,6 @@ static void ddr_init(void)
 	/* Reprogram the DDR PYHY Control register */
 	/* PHY control values */
 
-#else
-	/* Lock Core dpll
-	 * FREQ update method is not working
-	 * so use generic approach
-	 */
-	lock_core_dpll();
-
-	/* Reconfigure EMIF14D */
-	base_addr = EMIF1_BASE;
-	emif_reconfig(base_addr);
-
-	/* Configure EMIF24D */
-	base_addr = EMIF2_BASE;
-	emif_reconfig(base_addr);
-
-	/* Set DLL_OVERRIDE = 0 */
-	*(volatile int*)CM_DLL_CTRL = 0x0;
-
-	/* Check for DDR PHY ready for EMIF1 & EMIF2 */
-	while((((*(volatile int*)EMIF1_BASE + EMIF_STATUS)&(0x04)) != 0x04) \
-	|| (((*(volatile int*)EMIF2_BASE + EMIF_STATUS)&(0x04)) != 0x04));
-
-#endif	/* sr32(CM_MEMIF_CLKSTCTRL, 0, 32, 0x3); */ /* SDC BUG */
 	sr32(CM_MEMIF_EMIF_1_CLKCTRL, 0, 32, 0x1);
         sr32(CM_MEMIF_EMIF_2_CLKCTRL, 0, 32, 0x1);
 
