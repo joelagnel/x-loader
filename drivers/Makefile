@@ -41,7 +41,7 @@ OBJS 	+= k9f1g08r0a.o
 endif
 
 ifeq ($(BOARD), omap3evm)
-OBJS 	+= k9f1g08r0a.o
+OBJS 	+= k9f1g08r0a.o onenand.o
 endif
 
 ifeq ($(BOARD), overo)
