@@ -580,8 +580,10 @@ static scale_vcores(void)
 	/* PRM_VC_VAL_BYPASS */
         if(rev == OMAP4430_ES1_0)
 		*(volatile int*)(0x4A307BA0) = 0x316112;
-	else
+	else if(rev == OMAP4430_ES2_0)
 		*(volatile int*)(0x4A307BA0) = 0x296112;
+	else if (rev == OMAP4430_ES2_1)
+		*(volatile int*)(0x4A307BA0) = 0x2A6112;
 	*(volatile int*)(0x4A307BA0) |= 0x1000000;
 	while((*(volatile int*)(0x4A307BA0)) & 0x1000000);
 
