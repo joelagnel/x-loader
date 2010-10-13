@@ -452,6 +452,17 @@ void config_3430sdram_ddr(void)
 		__raw_writel(SDP_3430_SDRC_RFR_CTRL_165MHz, SDRC_RFR_CTRL_0);
 		__raw_writel(SDP_3430_SDRC_RFR_CTRL_165MHz, SDRC_RFR_CTRL_1);
 		break;
+	case 2: /* Hynix 256MB/512MB, 1/2 banks of 256MB */
+		__raw_writel(0x2, SDRC_CS_CFG); /* 256MB/bank */
+		__raw_writel(SDP_SDRC_MDCFG_0_DDR_HYNIX, SDRC_MCFG_0);
+		__raw_writel(SDP_SDRC_MDCFG_0_DDR_HYNIX, SDRC_MCFG_1);
+		__raw_writel(HYNIX_V_ACTIMA_165, SDRC_ACTIM_CTRLA_0);
+		__raw_writel(HYNIX_V_ACTIMB_165, SDRC_ACTIM_CTRLB_0);
+		__raw_writel(HYNIX_V_ACTIMA_165, SDRC_ACTIM_CTRLA_1);
+		__raw_writel(HYNIX_V_ACTIMB_165, SDRC_ACTIM_CTRLB_1);
+		__raw_writel(SDP_3430_SDRC_RFR_CTRL_165MHz, SDRC_RFR_CTRL_0);
+		__raw_writel(SDP_3430_SDRC_RFR_CTRL_165MHz, SDRC_RFR_CTRL_1);
+		break;
 	default:
 		__raw_writel(0x1, SDRC_CS_CFG); /* 128MB/bank */
 		__raw_writel(SDP_SDRC_MDCFG_0_DDR, SDRC_MCFG_0);
