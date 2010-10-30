@@ -31,6 +31,7 @@
  */
 
 #include <common.h>
+#include <asm/io.h>
 
 /* See also ARM Ref. Man. */
 #define C1_MMU		(1<<0)		/* mmu off/on */
@@ -68,7 +69,10 @@ unsigned int omap_revision(void)
 	case 0x410FC091:
 		return OMAP4430_ES1_0;
 	case 0x411FC092:
-		return OMAP4430_ES2_0;
+		if (__raw_readl(0x4a002204) == 0x3b95c02f)
+			return OMAP4430_ES2_1;
+		else
+			return OMAP4430_ES2_0;
 	default:
 		return OMAP4430_SILICON_ID_INVALID;
 	}

@@ -206,6 +206,20 @@ const struct ddr_regs ddr_regs_200_mhz_2cs = {
 	.mr2		= 0x1
 };
 
+const struct ddr_regs ddr_regs_400_mhz_2cs = {
+	/* tRRD changed from 10ns to 12.5ns because of the tFAW requirement*/
+	.tim1		= 0x10eb0662,
+	.tim2		= 0x20370dd2,
+	.tim3		= 0x00b1c33f,
+	.phy_ctrl_1	= 0x849FF408,
+	.ref_ctrl	= 0x00000618,
+	.config_init	= 0x80000eb9,
+	.config_final	= 0x80001ab9,
+	.zq_config	= 0xD00b3215,
+	.mr1		= 0x83,
+	.mr2		= 0x4
+};
+
 /*******************************************************
  * Routine: delay
  * Description: spinning delay to use before udelay works
@@ -238,6 +252,8 @@ static int emif_config(unsigned int base)
 		ddr_regs = &ddr_regs_380_mhz;
 	else if (rev == OMAP4430_ES2_0)
 		ddr_regs = &ddr_regs_200_mhz_2cs;
+	else if (rev == OMAP4430_ES2_1)
+		ddr_regs = &ddr_regs_400_mhz_2cs;
 	/*
 	 * set SDRAM CONFIG register
 	 * EMIF_SDRAM_CONFIG[31:29] REG_SDRAM_TYPE = 4 for LPDDR2-S4
@@ -366,6 +382,8 @@ static void ddr_init(void)
 		__raw_writel(0x1c1c1c1c, 0x4A100648);
 		__raw_writel(0x1c1c1c1c, 0x4A10064c);
 		__raw_writel(0x1c1c1c1c, 0x4A100650);
+		/* LPDDR2IO set to NMOS PTV */
+		__raw_writel(0x00ffc000, 0x4A100704);
 	} else if (rev == OMAP4430_ES2_0) {
 		__raw_writel(0x9e9e9e9e, 0x4A100638);
 		__raw_writel(0x9e9e9e9e, 0x4A10063c);
@@ -373,10 +391,9 @@ static void ddr_init(void)
 		__raw_writel(0x9e9e9e9e, 0x4A100648);
 		__raw_writel(0x9e9e9e9e, 0x4A10064c);
 		__raw_writel(0x9e9e9e9e, 0x4A100650);
+		/* LPDDR2IO set to NMOS PTV */
+		__raw_writel(0x00ffc000, 0x4A100704);
 	}
-	/* LPDDR2IO set to NMOS PTV */
-	__raw_writel(0x00ffc000, 0x4A100704);
-
 
 	/*
 	 * DMM Configuration
@@ -385,7 +402,7 @@ static void ddr_init(void)
 	/* Both EMIFs 128 byte interleaved*/
 	if (rev == OMAP4430_ES1_0)
 		*(volatile int*)(DMM_BASE + DMM_LISA_MAP_0) = 0x80540300;
-	else if (rev == OMAP4430_ES2_0)
+	else
 		*(volatile int*)(DMM_BASE + DMM_LISA_MAP_0) = 0x80640300;
 
 	/* EMIF2 only at 0x90000000 */
@@ -451,8 +468,10 @@ static void ddr_init(void)
 	 * be kept higher than default 0x7. As per recommondation 0x0A will
 	 * be used for better performance with REG_LL_THRESH_MAX = 0x00
 	 */
-	*(volatile int*)(EMIF1_BASE + EMIF_L3_CONFIG) = 0x0A0000FF;
-	*(volatile int*)(EMIF2_BASE + EMIF_L3_CONFIG) = 0x0A0000FF;
+	if (rev == OMAP4430_ES1_0) {
+		*(volatile int*)(EMIF1_BASE + EMIF_L3_CONFIG) = 0x0A0000FF;
+		*(volatile int*)(EMIF2_BASE + EMIF_L3_CONFIG) = 0x0A0000FF;
+	}
 
 	/*
 	 * DMM : DMM_LISA_MAP_0(Section_0)
@@ -553,10 +572,11 @@ static scale_vcores(void)
 
 	/* set VCORE1 force VSEL */
 	/* PRM_VC_VAL_BYPASS) */
-        if(rev == OMAP4430_ES1_0)
+	if(rev == OMAP4430_ES1_0)
 		*(volatile int*)(0x4A307BA0) = 0x3B5512;
 	else
 		*(volatile int*)(0x4A307BA0) = 0x3A5512;
+
 	*(volatile int*)(0x4A307BA0) |= 0x1000000;
 	while((*(volatile int*)(0x4A307BA0)) & 0x1000000);
 
@@ -578,10 +598,12 @@ static scale_vcores(void)
 
 	/*/set VCORE3 force VSEL */
 	/* PRM_VC_VAL_BYPASS */
-        if(rev == OMAP4430_ES1_0)
+	if(rev == OMAP4430_ES1_0)
 		*(volatile int*)(0x4A307BA0) = 0x316112;
-	else
+	else if (rev == OMAP4430_ES2_0)
 		*(volatile int*)(0x4A307BA0) = 0x296112;
+	else if (rev == OMAP4430_ES2_1)
+		*(volatile int*)(0x4A307BA0) = 0x2A6112;
 	*(volatile int*)(0x4A307BA0) |= 0x1000000;
 	while((*(volatile int*)(0x4A307BA0)) & 0x1000000);
 
@@ -618,7 +640,7 @@ void s_init(void)
 #endif	
 	prcm_init();
 
-	if(rev == OMAP4430_ES2_0) {
+	if(rev != OMAP4430_ES1_0) {
 		if (__raw_readl(0x4805D138) & (1<<22)) {
 			sr32(0x4A30a31C, 8, 1, 0x1);  /* enable software ioreq */
 			sr32(0x4A30a31C, 1, 2, 0x0);  /* set for sys_clk (38.4MHz) */
