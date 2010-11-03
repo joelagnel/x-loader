@@ -304,7 +304,31 @@ void config_3430sdram_ddr(void)
 	/* setup sdrc to ball mux */
 	__raw_writel(SDP_SDRC_SHARING, SDRC_SHARING);
 
-	if (beagle_revision() == REVISION_XM) {
+	switch(beagle_revision()) {
+	case REVISION_C4:
+		if (identify_xm_ddr() == NUMONYX_MCP) {
+			__raw_writel(0x4, SDRC_CS_CFG); /* 512MB/bank */
+			__raw_writel(SDP_SDRC_MDCFG_0_DDR_NUMONYX_XM, SDRC_MCFG_0);
+			__raw_writel(SDP_SDRC_MDCFG_0_DDR_NUMONYX_XM, SDRC_MCFG_1);
+			__raw_writel(NUMONYX_V_ACTIMA_165, SDRC_ACTIM_CTRLA_0);
+			__raw_writel(NUMONYX_V_ACTIMB_165, SDRC_ACTIM_CTRLB_0);
+			__raw_writel(NUMONYX_V_ACTIMA_165, SDRC_ACTIM_CTRLA_1);
+			__raw_writel(NUMONYX_V_ACTIMB_165, SDRC_ACTIM_CTRLB_1);
+			__raw_writel(SDP_3430_SDRC_RFR_CTRL_165MHz, SDRC_RFR_CTRL_0);
+			__raw_writel(SDP_3430_SDRC_RFR_CTRL_165MHz, SDRC_RFR_CTRL_1);
+		} else {
+			__raw_writel(0x1, SDRC_CS_CFG); /* 128MB/bank */
+			__raw_writel(SDP_SDRC_MDCFG_0_DDR, SDRC_MCFG_0);
+			__raw_writel(SDP_SDRC_MDCFG_0_DDR, SDRC_MCFG_1);
+			__raw_writel(MICRON_V_ACTIMA_165, SDRC_ACTIM_CTRLA_0);
+			__raw_writel(MICRON_V_ACTIMB_165, SDRC_ACTIM_CTRLB_0);
+			__raw_writel(MICRON_V_ACTIMA_165, SDRC_ACTIM_CTRLA_1);
+			__raw_writel(MICRON_V_ACTIMB_165, SDRC_ACTIM_CTRLB_1);
+			__raw_writel(SDP_3430_SDRC_RFR_CTRL_165MHz, SDRC_RFR_CTRL_0);
+			__raw_writel(SDP_3430_SDRC_RFR_CTRL_165MHz, SDRC_RFR_CTRL_1);
+		}
+		break;
+	case REVISION_XM:
 		if (identify_xm_ddr() == MICRON_DDR) {
 			__raw_writel(0x2, SDRC_CS_CFG); /* 256MB/bank */
 			__raw_writel(SDP_SDRC_MDCFG_0_DDR_MICRON_XM, SDRC_MCFG_0);
@@ -326,7 +350,8 @@ void config_3430sdram_ddr(void)
 			__raw_writel(SDP_3430_SDRC_RFR_CTRL_165MHz, SDRC_RFR_CTRL_0);
 			__raw_writel(SDP_3430_SDRC_RFR_CTRL_165MHz, SDRC_RFR_CTRL_1);
 		}
-	} else {
+		break;
+	default:
 		__raw_writel(0x1, SDRC_CS_CFG); /* 128MB/bank */
 		__raw_writel(SDP_SDRC_MDCFG_0_DDR, SDRC_MCFG_0);
 		__raw_writel(SDP_SDRC_MDCFG_0_DDR, SDRC_MCFG_1);
@@ -659,7 +684,10 @@ int misc_init_r(void)
 		printf("Beagle Rev C1/C2/C3\n");
 		break;
 	case REVISION_C4:
-		printf("Beagle Rev C4\n");
+		if (identify_xm_ddr() == NUMONYX_MCP)
+			printf("Beagle Rev C4 from Special Computing\n");
+		else
+			printf("Beagle Rev C4\n");
 		break;
 	case REVISION_XM:
 		printf("Beagle xM Rev A\n");
