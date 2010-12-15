@@ -113,7 +113,7 @@ oneboot:	x-load.bin
 		scripts/mkoneboot.sh
 
 signGP:		scripts/signGP.c
-		gcc -O3 -o signGP  $<
+		gcc -Wall -g -O3 -o signGP  $<
 
 #########################################################################
 else
