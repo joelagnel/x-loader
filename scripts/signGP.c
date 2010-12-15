@@ -1,10 +1,25 @@
-//
-// signGP.c
-// Read the x-load.bin file and write out the x-load.bin.ift file.
-// The signed image is the original pre-pended with the size of the image
-// and the load address.  If not entered on command line, file name is
-// assumed to be x-load.bin in current directory and load address is
-// 0x40200800.
+/**
+ * signGP.c - Read the x-load.bin file and write out the x-load.bin.ift file
+ *
+ * The signed image is the original pre-pended with the size of the image
+ * and the load address.  If not entered on command line, file name is
+ * assumed to be x-load.bin in current directory and load address is
+ * 0x40200800.
+ *
+ * Copyright (C) 2010 Texas Instruments Incorporated - http://www.ti.com
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2  of
+ * the License as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
