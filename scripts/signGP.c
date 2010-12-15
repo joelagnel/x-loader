@@ -138,7 +138,7 @@ struct ch_chsettings_nochram {
 
 
 #ifdef CH_WITH_CHRAM
-const struct ch_chsettings_chram config_header = {
+static const struct ch_chsettings_chram config_header = {
 	/* CHSETTINGS TOC */
 	{sizeof(struct ch_toc) * 4,
 	 sizeof(struct chsettings),
@@ -208,7 +208,8 @@ const struct ch_chsettings_chram config_header = {
 	""
 };
 #else
-struct ch_chsettings_nochram config_header  __attribute__((section(".config_header"))) = {
+static struct ch_chsettings_nochram config_header
+	__attribute__((section(".config_header"))) = {
 	/* CHSETTINGS TOC */
 	{(sizeof(struct ch_toc)) * 2,
 	 sizeof(struct chsettings),
