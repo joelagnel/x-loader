@@ -77,11 +77,11 @@ struct ch_toc {
 } __attribute__ ((__packed__));
 
 struct chram {
-	/*CHRAM */
+	/* CHRAM */
 	__u32 section_key_chr;
 	__u8 section_disable_chr;
 	__u8 pad_chr[3];
-	/*EMIF1 */
+	/* EMIF1 */
 	__u32 config_emif1;
 	__u32 refresh_emif1;
 	__u32 tim1_emif1;
@@ -94,7 +94,7 @@ struct chram {
 	__u8 modereg2_emif1;
 	__u8 modereg3_emif1;
 	__u8 pad_emif1;
-	/*EMIF2 */
+	/* EMIF2 */
 	__u32 config_emif2;
 	__u32 refresh_emif2;
 	__u32 tim1_emif2;
@@ -123,7 +123,7 @@ struct ch_chsettings_chram {
 	__u8 padding1[512 -
 		    (sizeof(struct ch_toc) * 3 +
 		     sizeof(struct chsettings) + sizeof(struct chram))];
-	//struct gp_header gpheader;
+	/* struct gp_header gpheader; */
 } __attribute__ ((__packed__));
 
 struct ch_chsettings_nochram {
@@ -133,25 +133,25 @@ struct ch_chsettings_nochram {
 	__u8 padding1[512 -
 		    (sizeof(struct ch_toc) * 2 +
 		     sizeof(struct chsettings))];
-	//struct gp_header gpheader;
+	/* struct gp_header gpheader; */
 } __attribute__ ((__packed__));
 
 
 #ifdef CH_WITH_CHRAM
 const struct ch_chsettings_chram config_header = {
-	//CHSETTINGS TOC
+	/* CHSETTINGS TOC */
 	{sizeof(struct ch_toc) * 4,
 	 sizeof(struct chsettings),
 	 "",
 	 {"CHSETTINGS"}
 	 },
-	//CHRAM TOC
+	/* CHRAM TOC */
 	{sizeof(struct ch_toc) * 4 + sizeof(struct chsettings),
 	 sizeof(struct chram),
 	 "",
 	 {"CHRAM"}
 	 },
-	// toc terminator
+	/* toc terminator */
 	{0xFFFFFFFF,
 	 0xFFFFFFFF,
 	 {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -159,20 +159,20 @@ const struct ch_chsettings_chram config_header = {
 	 {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 	  0xFF}
 	 },
-	//CHSETTINGS section
+	/* CHSETTINGS section */
 	{
 	 0xC0C0C0C1,
 	 0,
 	 1,
 	 0,
 	 0},
-	//CHRAM section
+	/* CHRAM section */
 	{
 	 0xc0c0c0c2,
 	 0x01,
 	 {0x00, 0x00, 0x00},
 
-	 /*EMIF1 */
+	 /* EMIF1 */
 	 0x80800eb2,
 	 0x00000010,
 	 0x110d1624,
@@ -186,7 +186,7 @@ const struct ch_chsettings_chram config_header = {
 	 0x02,
 	 0x00,
 
-	 /*EMIF2 */
+	 /* EMIF2 */
 	 0x80800eb2,
 	 0x000002ba,
 	 0x110d1624,
@@ -209,13 +209,13 @@ const struct ch_chsettings_chram config_header = {
 };
 #else
 struct ch_chsettings_nochram config_header  __attribute__((section(".config_header"))) = {
-	//CHSETTINGS TOC
+	/* CHSETTINGS TOC */
 	{(sizeof(struct ch_toc)) * 2,
 	 sizeof(struct chsettings),
 	 "",
 	 {"CHSETTINGS"}
 	 },
-	// toc terminator
+	/* toc terminator */
 	{0xFFFFFFFF,
 	 0xFFFFFFFF,
 	 {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -223,7 +223,7 @@ struct ch_chsettings_nochram config_header  __attribute__((section(".config_head
 	 {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 	  0xFF}
 	 },
-	//CHSETTINGS section
+	/* CHSETTINGS section */
 	{
 	 0xC0C0C0C1,
 	 0,
@@ -244,7 +244,7 @@ main(int argc, char *argv[])
 	struct stat	sinfo;
 
 
-	// Default to x-load.bin and 0x40200800.
+	/* Default to x-load.bin and 0x40200800. */
 	strcpy(ifname, "x-load.bin");
 	loadaddr = 0x40200800;
 
@@ -254,22 +254,22 @@ main(int argc, char *argv[])
 	if (argc == 3)
 		loadaddr = strtoul(argv[2], NULL, 16);
 
-	// Form the output file name.
+	/* Form the output file name. */
 	strcpy(ofname, ifname);
 	strcat(ofname, ".ift");
 
-	// Open the input file.
+	/* Open the input file. */
 	ifile = fopen(ifname, "rb");
 	if (ifile == NULL) {
 		printf("Cannot open %s\n", ifname);
 		exit(0);
 	}
 
-	// Get file length.
+	/* Get file length. */
 	stat(ifname, &sinfo);
 	len = sinfo.st_size;
 
-	// Open the output file and write it.
+	/* Open the output file and write it. */
 	ofile = fopen(ofname, "wb");
 	if (ofile == NULL) {
 		printf("Cannot open %s\n", ofname);
@@ -277,10 +277,12 @@ main(int argc, char *argv[])
 		exit(0);
 	}
 
-	// Pad 1 sector of zeroes.
-	//ch = 0x00;
-	//for (i=0; i<0x200; i++)
-	//	fwrite(&ch, 1, 1, ofile);
+	/* Pad 1 sector of zeroes. */
+#if 0
+	ch = 0x00;
+	for (i = 0; i < 0x200; i++)
+		fwrite(&ch, 1, 1, ofile);
+#endif
 
 	fwrite(&config_header, 1, 512, ofile);
 	fwrite(&len, 1, 4, ofile);
