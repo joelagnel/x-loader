@@ -288,7 +288,7 @@ int main(int argc, char *argv[])
 	fwrite(&config_header, 1, 512, ofile);
 	fwrite(&len, 1, 4, ofile);
 	fwrite(&loadaddr, 1, 4, ofile);
-	for (i=0; i<len; i++) {
+	for (i = 0; i < len; i++) {
 		fread(&ch, 1, 1, ifile);
 		fwrite(&ch, 1, 1, ofile);
 	}
