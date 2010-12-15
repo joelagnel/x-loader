@@ -235,7 +235,7 @@ struct ch_chsettings_nochram config_header  __attribute__((section(".config_head
 #endif
 
 
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	int	i;
 	char	ifname[FILENAME_MAX], ofname[FILENAME_MAX], ch;
@@ -294,4 +294,6 @@ main(int argc, char *argv[])
 
 	fclose(ifile);
 	fclose(ofile);
+
+	return 0;
 }
