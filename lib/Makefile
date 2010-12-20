@@ -25,22 +25,23 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	= lib$(ARCH).a
+LIB	= $(obj)lib$(ARCH).a
 
-AOBJS	= _udivsi3.o _umodsi3.o
+SOBJS	= _udivsi3.o _umodsi3.o
 
 COBJS	= board.o ecc.o printf.o div0.o 
 
-OBJS	= $(AOBJS) $(COBJS)
+SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
+OBJS	:= $(addprefix $(obj),$(SOBJS) $(COBJS))
 
-$(LIB):	.depend $(OBJS)
+$(LIB):	$(obj).depend $(OBJS)
 	$(AR) crv $@ $(OBJS)
 
 #########################################################################
 
-.depend:	Makefile $(AOBJS:.o=.S) $(COBJS:.o=.c)
-		$(CC) -M $(CFLAGS) $(AOBJS:.o=.S) $(COBJS:.o=.c) > $@
+# defines $(obj).depend target
+include $(SRCTREE)/rules.mk
 
-sinclude .depend
+sinclude $(obj).depend
 
 #########################################################################

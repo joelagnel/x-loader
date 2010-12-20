@@ -25,20 +25,23 @@ include $(TOPDIR)/config.mk
 
 #CFLAGS += -DET_DEBUG -DDEBUG
 
-LIB	= libdisk.a
+LIB	= $(obj)libdisk.a
 
-OBJS	= part.o
+COBJS	= part.o
+
+SRCS	:= $(COBJS:.o=.c)
+OBJS	:= $(addprefix $(obj),$(COBJS))
 
 all:	$(LIB)
 
-$(LIB):	$(START) $(OBJS)
+$(LIB):	$(obj).depend $(OBJS)
 	$(AR) crv $@ $(OBJS)
 
 #########################################################################
 
-.depend:	Makefile $(OBJS:.o=.c)
-		$(CC) -M $(CFLAGS) $(OBJS:.o=.c) > $@
+# defines $(obj).depend target
+include $(SRCTREE)/rules.mk
 
-sinclude .depend
+sinclude $(obj).depend
 
 #########################################################################

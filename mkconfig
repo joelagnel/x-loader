@@ -24,17 +24,19 @@ done
 
 echo "Configuring for $1 board..."
 
-cd ./include
-
 #
 # Create link to architecture specific headers
 #
-rm -f asm/arch
-ln -s arch-$3 asm/arch
-
-if [ "$2" = "arm" ] ; then
-	rm -f asm/proc
-	ln -s proc-armv asm/proc
+if [ "$SRCTREE" != "$OBJTREE" ] ; then
+	mkdir -p ${OBJTREE}/include
+	cd ${OBJTREE}/include
+	mkdir -p asm
+	rm -f asm/arch
+	ln -s ${SRCTREE}/include/asm/arch-$3 asm/arch
+else
+	cd ./include
+	rm -f asm/arch
+	ln -s arch-$3 asm/arch
 fi
 
 #

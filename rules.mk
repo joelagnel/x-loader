@@ -1,15 +1,14 @@
 #
-# (C) Copyright 2009
-# Texas Instruments, <www.ti.com>
-# (C) Copyright 2000-2003
+# (C) Copyright 2006
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
 #
 # See file CREDITS for list of people who contributed to this
 # project.
 #
 # This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# version 2 as published by the Free Software Foundation.
+# modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of
+# the License, or (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -22,27 +21,15 @@
 # MA 02111-1307 USA
 #
 
-include $(TOPDIR)/config.mk
-
-LIB	= $(obj)lib$(CPU).a
-
-START	= start.o
-COBJS	= cpu.o mmc.o sys_info.o
-
-SRCS	:= $(START:.o=.S) $(SOBJS:.o=.S) $(COBJS:.o=.c)
-OBJS	:= $(addprefix $(obj),$(SOBJS) $(COBJS))
-START	:= $(addprefix $(obj),$(START))
-
-all:	$(obj).depend $(START) $(LIB)
-
-$(LIB):	$(OBJS)
-	$(AR) crv $@ $(OBJS)
-
 #########################################################################
 
-# defines $(obj).depend target
-include $(SRCTREE)/rules.mk
+_depend:	$(obj).depend
 
-sinclude $(obj).depend
+$(obj).depend: $(src)Makefile $(TOPDIR)/config.mk $(SRCS)
+		@rm -f $@
+		@for f in $(SRCS); do \
+			g=`basename $$f | sed -e 's/\(.*\)\.\w/\1.o/'`; \
+			$(CC) -M $(HOST_CFLAGS) $(CPPFLAGS) -MQ $(obj)$$g $$f >> $@ ; \
+		done
 
 #########################################################################
