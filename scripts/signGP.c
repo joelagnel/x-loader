@@ -263,7 +263,7 @@ int main(int argc, char *argv[])
 	ifile = fopen(ifname, "rb");
 	if (ifile == NULL) {
 		printf("Cannot open %s\n", ifname);
-		exit(0);
+		return 1;
 	}
 
 	/* Get file length. */
@@ -275,7 +275,7 @@ int main(int argc, char *argv[])
 	if (ofile == NULL) {
 		printf("Cannot open %s\n", ofname);
 		fclose(ifile);
-		exit(0);
+		return 1;
 	}
 
 	/* Pad 1 sector of zeroes. */
