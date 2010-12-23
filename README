@@ -36,8 +36,6 @@ Nand booting.
 Status:
 =======
 
-The support for Texas Instruments H3 board (OMAP1710) has been implemented
-and tested. (May 2004)
 The support for Texas Instruments H4 board (OMAP2420) has been implemented
 and tested. (Nov 2004)
 The support for Texas Instruments 2430SDP board (OMAP2430) has been implemented
@@ -62,8 +60,6 @@ Directory Hierarchy:
 - cpu/omap3 Files specific to ARM CortexA8 CPU
 
  
-- board/omap1710h3
-		Files specific to OMAP 1710 H3 boards
 - board/omap2420h4
 		Files specific to OMAP 2420 H4 boards
 - board/omap2430sdp
@@ -79,16 +75,16 @@ Configuration is usually done using C preprocessor defines. Configuration
 depends on the combination of board and CPU type; all such information is
 kept in a configuration file "include/configs/<board_name>.h".
 
-Example: For a H3 module, all configuration settings are in
-"include/configs/omap1710h3.h".
+Example: For a OMAP4 PandaBoard, all configuration settings are in
+"include/configs/omap4430panda.h"
   
 For all supported boards there are ready-to-use default
 configurations available; just type "make <board_name>_config".
 
-Example: For a H3 module type:
+Example: For a OMAP4 PandaBoard, type:
 
 	cd x-load
-	make omap1710h3_config
+	make omap4430panda_config
 
 After a board has been configured, type "make" to build it supposing the
 needed cross tools are in your path.
@@ -118,15 +114,9 @@ Next you need to get your OS boot loader to Nand at the address your
 X-Loader expects. For the H3 example, you can use U-Boot to flash U-Boot.
 You can't use FlashWriterNand because it uses ROM code ECC style.  
 
-
-More Information
-================
-
-OMAP1710 NAND Booting Design Document has more information.
-
 Implemenation notes:
 ====================
-H3, H4 support NAND flash booting
+H4 support NAND flash booting
 2430sdp & 3430sdp support OneNAND booting
 
 
