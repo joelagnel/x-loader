@@ -77,6 +77,10 @@ typedef enum {
 #define SDP_SDRC_MDCFG_0_DDR_HYNIX	(0x03588019|B_ALL)
 #endif
 
+/* Numonyx devices */
+#define MK65KX001AM_SDRC_MCDCFG	(0x02584019|B_ALL)
+#define MK65KX002AM_SDRC_MCDCFG	(0x03588019|B_ALL)
+
 #define SDP_SDRC_MR_0_DDR		0x00000032
 
 /* Diabling power down mode using CKE pin */
