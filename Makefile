@@ -155,7 +155,6 @@ all:		$(ALL)
 ift:	$(ALL) $(obj)x-load.bin.ift
 
 $(obj)x-load.bin.ift: $(obj)signGP $(obj)System.map $(obj)x-load.bin
-	TEXT_BASE=`grep -w _start $(obj)System.map|cut -d ' ' -f1`
 	$(obj)./signGP $(obj)x-load.bin $(TEXT_BASE)
 	cp $(obj)x-load.bin.ift $(obj)MLO
  
