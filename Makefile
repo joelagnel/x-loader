@@ -155,7 +155,7 @@ all:		$(ALL)
 ift:	$(ALL) $(obj)x-load.bin.ift
 
 $(obj)x-load.bin.ift: $(obj)signGP $(obj)System.map $(obj)x-load.bin
-	$(obj)./signGP $(obj)x-load.bin $(TEXT_BASE)
+	$(obj)./signGP $(obj)x-load.bin $(TEXT_BASE) $(CONFIG_HEADER)
 	cp $(obj)x-load.bin.ift $(obj)MLO
  
 $(obj)x-load.bin:	$(obj)x-load
@@ -234,7 +234,7 @@ igep0020_config :    unconfig
 ## OMAP4 (ARM-CortexA9) Systems
 #########################################################################
 omap4430panda_config :    unconfig
-	@./mkconfig $(@:_config=) arm omap4 omap4430panda
+	@./mkconfig $(@:_config=) arm omap4 omap4430panda 1
 
 #########################################################################
 

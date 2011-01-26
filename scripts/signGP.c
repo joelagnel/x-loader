@@ -243,17 +243,21 @@ int main(int argc, char *argv[])
 	FILE	*ifile, *ofile;
 	unsigned long	loadaddr, len;
 	struct stat	sinfo;
+	int ch_add = 0;
 
 
 	/* Default to x-load.bin and 0x40200800. */
 	strcpy(ifname, "x-load.bin");
 	loadaddr = 0x40200800;
 
-	if ((argc == 2) || (argc == 3))
+	if ((argc == 2) || (argc == 3) || (argc == 4))
 		strcpy(ifname, argv[1]);
 
-	if (argc == 3)
+	if ((argc == 3) || (argc == 4))
 		loadaddr = strtoul(argv[2], NULL, 16);
+
+	if (argc == 4)
+		ch_add = strtoul(argv[3], NULL, 16);
 
 	/* Form the output file name. */
 	strcpy(ofname, ifname);
@@ -285,7 +289,9 @@ int main(int argc, char *argv[])
 		fwrite(&ch, 1, 1, ofile);
 #endif
 
-	fwrite(&config_header, 1, 512, ofile);
+	if (ch_add)
+		fwrite(&config_header, 1, 512, ofile);
+
 	fwrite(&len, 1, 4, ofile);
 	fwrite(&loadaddr, 1, 4, ofile);
 	for (i = 0; i < len; i++) {

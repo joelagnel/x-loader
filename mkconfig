@@ -46,7 +46,7 @@ echo "ARCH  = $2" >  config.mk
 echo "CPU   = $3" >> config.mk
 echo "BOARD = $4" >> config.mk
 
-[ "$5" ] && echo "VENDOR = $5" >> config.mk
+[ "$5" ] && echo "CONFIG_HEADER = $5" >> config.mk
 
 #
 # Create board specific header file
