@@ -22,7 +22,8 @@
 # Top-level generic files
 #
 x-load
-x-load.*
+x-load.map
+x-load.bin
 System.map
 include/asm/arch
 include/asm/proc
