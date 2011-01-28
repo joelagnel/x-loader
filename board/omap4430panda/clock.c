@@ -423,7 +423,7 @@ static void configure_core_dpll(clk_index)
 		dpll_param_p = &core_dpll_param_l3_190[clk_index];
 	else if(omap_revision() == OMAP4430_ES2_0)
 		dpll_param_p = &core_dpll_param[clk_index];
-	else if(omap_revision() == OMAP4430_ES2_1)
+	else if(omap_revision() >= OMAP4430_ES2_1)
 		dpll_param_p = &core_dpll_param_ddr400[clk_index];
 
 	/* Disable autoidle */
@@ -482,7 +482,7 @@ void configure_core_dpll_no_lock(void)
 		dpll_param_p = &core_dpll_param_l3_190[clk_index];
 	else if(omap_revision() == OMAP4430_ES2_0)
 		dpll_param_p = &core_dpll_param[clk_index];
-	else if(omap_revision() == OMAP4430_ES2_1)
+	else if(omap_revision() >= OMAP4430_ES2_1)
 		dpll_param_p = &core_dpll_param_ddr400[clk_index];
 
 	/* Disable autoidle */
@@ -530,7 +530,7 @@ void lock_core_dpll_shadow(void)
 		dpll_param_p = &core_dpll_param_l3_190[6];
 	else if(omap_revision() == OMAP4430_ES2_0)
 		dpll_param_p = &core_dpll_param[6];
-	else if(omap_revision() == OMAP4430_ES2_1)
+	else if(omap_revision() >= OMAP4430_ES2_1)
 		dpll_param_p = &core_dpll_param_ddr400[6];
 
 	/* CM_SHADOW_FREQ_CONFIG1: DLL_OVERRIDE = 1(hack), DLL_RESET = 1,

@@ -252,7 +252,7 @@ static int emif_config(unsigned int base)
 		ddr_regs = &ddr_regs_380_mhz;
 	else if (rev == OMAP4430_ES2_0)
 		ddr_regs = &ddr_regs_200_mhz_2cs;
-	else if (rev == OMAP4430_ES2_1)
+	else if (rev >= OMAP4430_ES2_1)
 		ddr_regs = &ddr_regs_400_mhz_2cs;
 	/*
 	 * set SDRAM CONFIG register
@@ -602,7 +602,7 @@ static scale_vcores(void)
 		*(volatile int*)(0x4A307BA0) = 0x316112;
 	else if (rev == OMAP4430_ES2_0)
 		*(volatile int*)(0x4A307BA0) = 0x296112;
-	else if (rev == OMAP4430_ES2_1)
+	else if (rev >= OMAP4430_ES2_1)
 		*(volatile int*)(0x4A307BA0) = 0x2A6112;
 	*(volatile int*)(0x4A307BA0) |= 0x1000000;
 	while((*(volatile int*)(0x4A307BA0)) & 0x1000000);

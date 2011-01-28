@@ -63,17 +63,20 @@ unsigned int cortex_a9_rev(void)
 
 unsigned int omap_revision(void)
 {
+	unsigned int chip_rev = 0;
 	unsigned int rev = cortex_a9_rev();
 
 	switch(rev) {
 	case 0x410FC091:
 		return OMAP4430_ES1_0;
 	case 0x411FC092:
-		if (__raw_readl(0x4a002204) == 0x3b95c02f)
+		chip_rev = (__raw_readl(OMAP44XX_CTRL_ID_CODE)  >> 28) & 0xF;
+		if (chip_rev == 3)
 			return OMAP4430_ES2_1;
+		else if (chip_rev >= 4)
+			return OMAP4430_ES2_2;
 		else
 			return OMAP4430_ES2_0;
-	default:
-		return OMAP4430_SILICON_ID_INVALID;
 	}
+	return OMAP4430_SILICON_ID_INVALID;
 }
