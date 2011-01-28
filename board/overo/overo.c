@@ -610,7 +610,7 @@ void prcm_init(void)
 	 * and sil_index will get the values for that SysClk for the
 	 * appropriate silicon rev.
 	 */
-	sil_index = get_cpu_rev() - 1;
+	sil_index = (get_cpu_rev() == CPU_3XX_ES10) ? 0 : 1;
 
 	/* Unlock MPU DPLL (slows things down, and needed later) */
 	sr32(CM_CLKEN_PLL_MPU, 0, 3, PLL_LOW_POWER_BYPASS);
