@@ -445,7 +445,7 @@ static void configure_core_dpll(clk_index)
 		sr32(CM_DIV_M3_DPLL_CORE, 8, 1, 0x1);
 		sr32(CM_DIV_M4_DPLL_CORE, 8, 1, 0x1);
 		sr32(CM_DIV_M5_DPLL_CORE, 8, 1, 0x1);
-		sr32(CM_DIV_M6_DPLL_CORE, 8, 1, 0x1);
+		sr32(CM_DIV_M6_DPLL_CORE, 8, 1, 0x0);
 		sr32(CM_DIV_M7_DPLL_CORE, 8, 1, 0x1);
 	}
 
@@ -504,7 +504,7 @@ void configure_core_dpll_no_lock(void)
 		sr32(CM_DIV_M3_DPLL_CORE, 8, 1, 0x1);
 		sr32(CM_DIV_M4_DPLL_CORE, 8, 1, 0x1);
 		sr32(CM_DIV_M5_DPLL_CORE, 8, 1, 0x1);
-		sr32(CM_DIV_M6_DPLL_CORE, 8, 1, 0x1);
+		sr32(CM_DIV_M6_DPLL_CORE, 8, 1, 0x0);
 		sr32(CM_DIV_M7_DPLL_CORE, 8, 1, 0x1);
 //	}
 
