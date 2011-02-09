@@ -248,8 +248,6 @@ static void configure_mpu_dpll(u32 clk_index)
 	/* Lock the mpu dpll */
 	sr32(CM_CLKMODE_DPLL_MPU, 0, 3, PLL_LOCK | 0x10);
 	wait_on_value(BIT0, 1, CM_IDLEST_DPLL_MPU, LDELAY);
-
-	return;
 }
 
 static void configure_iva_dpll(u32 clk_index)
@@ -388,7 +386,10 @@ static void configure_usb_dpll(u32 clk_index)
 	sr32(CM_CLKDCOLDO_DPLL_USB, 0, 32, 0x100);
 }
 
-static void configure_core_dpll(clk_index)
+#if 0
+
+/* to remove warning about unused function; will be deleted in decruft patch */
+static void configure_core_dpll(int clk_index)
 {
 	struct dpll_param *dpll_param_p;
 
@@ -444,11 +445,11 @@ static void configure_core_dpll(clk_index)
 	sr32(CM_CLKMODE_DPLL_CORE, 0, 3, PLL_LOCK);
 	wait_on_value(BIT0, 1, CM_IDLEST_DPLL_CORE, LDELAY);
 }
-
+#endif
 
 void configure_core_dpll_no_lock(void)
 {
-	struct dpll_param *dpll_param_p;
+	struct dpll_param *dpll_param_p = NULL;
 	u32 clk_index;
 
 	/* Get the sysclk speed from cm_sys_clksel
@@ -475,6 +476,9 @@ void configure_core_dpll_no_lock(void)
 		break;
 	case OMAP4430_ES2_1:
 		dpll_param_p = &core_dpll_param_ddr400[clk_index];
+		break;
+	default:
+		/* we are screwed */
 		break;
 	}
 
@@ -507,10 +511,10 @@ void lock_core_dpll(void)
 
 void lock_core_dpll_shadow(void)
 {
-	struct dpll_param *dpll_param_p;
+	struct dpll_param *dpll_param_p = NULL;
 
 	/* Lock the core dpll using freq update method */
-	*(volatile int*)0x4A004120 = 10;	/* CM_CLKMODE_DPLL_CORE */
+	*(volatile int *)0x4A004120 = 10;	/* CM_CLKMODE_DPLL_CORE */
 
 	switch (omap_revision()) {
 	case OMAP4430_ES1_0:
@@ -521,6 +525,9 @@ void lock_core_dpll_shadow(void)
 		break;
 	case OMAP4430_ES2_1:
 		dpll_param_p = &core_dpll_param_ddr400[6];
+		break;
+	default:
+		/* we are screwed */
 		break;
 	}
 
@@ -540,8 +547,6 @@ void lock_core_dpll_shadow(void)
 
 static void enable_all_clocks(void)
 {
-	volatile int regvalue = 0;
-
 	/* Enable Ducati clocks */
 	sr32(CM_DUCATI_DUCATI_CLKCTRL, 0, 32, 0x1);
 	sr32(CM_DUCATI_CLKSTCTRL, 0, 32, 0x2);

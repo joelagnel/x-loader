@@ -107,4 +107,12 @@ int 	nand_correct_data (u_char *dat, u_char *read_ecc, u_char *calc_ecc);
 
 /* lib/board.c */
 void	hang		(void) __attribute__ ((noreturn));
+
+extern int do_load_serial_bin (ulong offset, int baudrate);
+extern u32 get_mem_type(void);
+extern int mmc_init(int verbose);
+extern int misc_init_r(void);
+
+extern int sprintf (char *__s, const char *__format, ...);
+
 #endif	/* __COMMON_H_ */

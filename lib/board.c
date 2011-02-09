@@ -46,15 +46,17 @@ int print_info(void)
 	return 0;
 }
 
-static int init_func_i2c (void)
-{
+/* !!! why is I2C dependent on MMC? */
+
 #ifdef CONFIG_MMC
 #ifdef CONFIG_DRIVER_OMAP34XX_I2C
+static int init_func_i2c (void)
+{
 	i2c_init (CFG_I2C_SPEED, CFG_I2C_SLAVE);
-#endif
-#endif
 	return 0;
 }
+#endif
+#endif
 
 typedef int (init_fnc_t) (void);
 
@@ -77,16 +79,13 @@ init_fnc_t *init_sequence[] = {
 void start_armboot (void)
 {
   	init_fnc_t **init_fnc_ptr;
- 	int i, size;
+ 	int size;
 	uchar *buf;
 	int *first_instruction;
-	block_dev_desc_t *dev_desc = NULL;
 
-   	for (init_fnc_ptr = init_sequence; *init_fnc_ptr; ++init_fnc_ptr) {
-		if ((*init_fnc_ptr)() != 0) {
+   	for (init_fnc_ptr = init_sequence; *init_fnc_ptr; ++init_fnc_ptr)
+		if ((*init_fnc_ptr)())
 			hang ();
-		}
-	}
 
 	misc_init_r();
 

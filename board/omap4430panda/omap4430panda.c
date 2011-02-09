@@ -238,6 +238,11 @@ void big_delay(unsigned int count)
 		delay(1);
 }
 
+void reset_phy(unsigned int base)
+{
+	*(volatile int *)(base + IODFT_TLGC) |= (1 << 10);
+}
+
 /* TODO: FREQ update method is not working so shadow registers programming
  * is just for same of completeness. This would be safer if auto
  * trasnitions are working
@@ -245,7 +250,7 @@ void big_delay(unsigned int count)
 static int emif_config(unsigned int base)
 {
 	unsigned int reg_value, rev;
-	const struct ddr_regs *ddr_regs;
+	const struct ddr_regs *ddr_regs = NULL;
 	rev = omap_revision();
 
 	if (rev == OMAP4430_ES1_0)
@@ -254,6 +259,7 @@ static int emif_config(unsigned int base)
 		ddr_regs = &ddr_regs_200_mhz_2cs;
 	else if (rev >= OMAP4430_ES2_1)
 		ddr_regs = &ddr_regs_400_mhz_2cs;
+
 	/*
 	 * set SDRAM CONFIG register
 	 * EMIF_SDRAM_CONFIG[31:29] REG_SDRAM_TYPE = 4 for LPDDR2-S4
@@ -361,6 +367,7 @@ static int emif_config(unsigned int base)
 	*(volatile int*)(base + EMIF_LPDDR2_MODE_REG_DATA) = 0;
 	/* LPDDR2 init complete */
 
+	return 0;
 }
 /*****************************************
  * Routine: ddr_init
@@ -549,16 +556,13 @@ void secure_unlock_mem(void)
  ***********************************************************/
 void try_unlock_memory(void)
 {
-	int mode;
-
 	/* if GP device unlock device SRAM for general use */
 	/* secure code breaks for Secure/Emulation device - HS/E/T*/
-	return;
 }
 
 
 #if defined(CONFIG_MPU_600) || defined(CONFIG_MPU_1000)
-static scale_vcores(void)
+static int scale_vcores(void)
 {
 	unsigned int rev = omap_revision();
 	/* For VC bypass only VCOREx_CGF_FORCE  is necessary and
@@ -609,6 +613,7 @@ static scale_vcores(void)
 	/* PRM_IRQSTATUS_MPU */
 	*(volatile int*)(0x4A306010) = *(volatile int*)(0x4A306010);
 
+	return 0;
 }
 #endif
 
@@ -1212,7 +1217,6 @@ int dram_init(void)
 void set_muxconf_regs(void)
 {
 	MUX_DEFAULT_OMAP4();
-	return;
 }
 
 /******************************************************************************
@@ -1225,8 +1229,6 @@ void set_muxconf_regs(void)
 void update_mux(u32 btype, u32 mtype)
 {
 	/* REVISIT  */
-	return;
-
 }
 
 /* optionally do something like blinking LED */
@@ -1239,8 +1241,4 @@ void board_hang(void)
 int nand_init(void)
 {
 	return 0;
-}
-void reset_phy(unsigned int base)
-{
-	*(volatile int*)(base + IODFT_TLGC) |= (1 << 10);
 }
