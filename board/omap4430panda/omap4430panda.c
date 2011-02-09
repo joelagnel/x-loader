@@ -268,16 +268,16 @@ void spam_leds(void)
  */
 static int emif_config(unsigned int base)
 {
-	unsigned int reg_value, rev;
-	const struct ddr_regs *ddr_regs = NULL;
-	rev = omap_revision();
+	const struct ddr_regs *ddr_regs = &ddr_regs_400_mhz_2cs;
 
-	if (rev == OMAP4430_ES1_0)
+	switch (omap_revision()) {
+	case OMAP4430_ES1_0:
 		ddr_regs = &ddr_regs_380_mhz;
-	else if (rev == OMAP4430_ES2_0)
+		break;
+	case OMAP4430_ES2_0:
 		ddr_regs = &ddr_regs_200_mhz_2cs;
-	else if (rev >= OMAP4430_ES2_1)
-		ddr_regs = &ddr_regs_400_mhz_2cs;
+		break;
+	}
 
 	/*
 	 * set SDRAM CONFIG register
@@ -332,15 +332,13 @@ static int emif_config(unsigned int base)
 
 	__raw_writel(MR0_ADDR, base + EMIF_LPDDR2_MODE_REG_CFG);
 
-	do {
-		reg_value = __raw_readl(base + EMIF_LPDDR2_MODE_REG_DATA);
-	} while (reg_value & 1);
+	while (__raw_readl(base + EMIF_LPDDR2_MODE_REG_DATA) & 1)
+		;
 
 	__raw_writel(CS1_MR(MR0_ADDR), base + EMIF_LPDDR2_MODE_REG_CFG);
 
-	do {
-		reg_value = __raw_readl(base + EMIF_LPDDR2_MODE_REG_DATA);
-	} while (reg_value & 1);
+	while (__raw_readl(base + EMIF_LPDDR2_MODE_REG_DATA) & 1)
+		;
 
 
 	/* set MR10 register */
@@ -395,10 +393,11 @@ static int emif_config(unsigned int base)
  *****************************************/
 static void ddr_init(void)
 {
-	unsigned int base_addr, rev;
-	rev = omap_revision();
+	unsigned int base_addr;
 
-	if (rev == OMAP4430_ES1_0) {
+	switch (omap_revision()) {
+
+	case OMAP4430_ES1_0:
 		/* Configurte the Control Module DDRIO device */
 		__raw_writel(0x1c1c1c1c, 0x4A100638);
 		__raw_writel(0x1c1c1c1c, 0x4A10063c);
@@ -408,7 +407,11 @@ static void ddr_init(void)
 		__raw_writel(0x1c1c1c1c, 0x4A100650);
 		/* LPDDR2IO set to NMOS PTV */
 		__raw_writel(0x00ffc000, 0x4A100704);
-	} else if (rev == OMAP4430_ES2_0) {
+
+		/* Both EMIFs 128 byte interleaved */
+		__raw_writel(0x80540300, DMM_BASE + DMM_LISA_MAP_0);
+		break;
+	case OMAP4430_ES2_0:
 		__raw_writel(0x9e9e9e9e, 0x4A100638);
 		__raw_writel(0x9e9e9e9e, 0x4A10063c);
 		__raw_writel(0x9e9e9e9e, 0x4A100640);
@@ -417,17 +420,16 @@ static void ddr_init(void)
 		__raw_writel(0x9e9e9e9e, 0x4A100650);
 		/* LPDDR2IO set to NMOS PTV */
 		__raw_writel(0x00ffc000, 0x4A100704);
+		/* fall thru */
+	default:
+		/* Both EMIFs 128 byte interleaved */
+		__raw_writel(0x80640300, DMM_BASE + DMM_LISA_MAP_0);
+		break;
 	}
 
 	/*
 	 * DMM Configuration
 	 */
-
-	/* Both EMIFs 128 byte interleaved*/
-	if (rev == OMAP4430_ES1_0)
-		__raw_writel(0x80540300, DMM_BASE + DMM_LISA_MAP_0);
-	else
-		__raw_writel(0x80640300, DMM_BASE + DMM_LISA_MAP_0);
 
 	__raw_writel(0x00000000, DMM_BASE + DMM_LISA_MAP_2);
 	__raw_writel(0xFF020100, DMM_BASE + DMM_LISA_MAP_3);
@@ -498,7 +500,7 @@ static void ddr_init(void)
 	 * be kept higher than default 0x7. As per recommondation 0x0A will
 	 * be used for better performance with REG_LL_THRESH_MAX = 0x00
 	 */
-	if (rev == OMAP4430_ES1_0) {
+	if (omap_revision() == OMAP4430_ES1_0) {
 		__raw_writel(0x0A0000FF, EMIF1_BASE + EMIF_L3_CONFIG);
 		__raw_writel(0x0A0000FF, EMIF2_BASE + EMIF_L3_CONFIG);
 	}
@@ -705,30 +707,31 @@ void s_init(void)
 	scale_vcores();
 #endif
 
-	if (rev != OMAP4430_ES1_0) {
-		if (__raw_readl(0x4805D138) & (1<<22)) {
-			/* enable software ioreq */
-			sr32(0x4A30a31C, 8, 1, 0x1);
-			/* set for sys_clk (38.4MHz) */
-			sr32(0x4A30a31C, 1, 2, 0x0);
-			/* set divisor to 2 */
-			sr32(0x4A30a31C, 16, 4, 0x1);
-			/* set the clock source to active */
-			sr32(0x4A30a110, 0, 1, 0x1);
-			/* enable clocks */
-			sr32(0x4A30a110, 2, 2, 0x3);
-		} else {
-			/* enable software ioreq */
-			sr32(0x4A30a314, 8, 1, 0x1);
-			/* set for PER_DPLL */
-			sr32(0x4A30a314, 1, 2, 0x2);
-			/* set divisor to 16 */
-			sr32(0x4A30a314, 16, 4, 0xf);
-			/* set the clock source to active */
-			sr32(0x4A30a110, 0, 1, 0x1);
-			/* enable clocks */
-			sr32(0x4A30a110, 2, 2, 0x3);
-		}
+	if (rev == OMAP4430_ES1_0)
+		return;
+		
+	if (__raw_readl(0x4805D138) & (1 << 22)) {
+		/* enable software ioreq */
+		sr32(0x4A30a31C, 8, 1, 0x1);
+		/* set for sys_clk (38.4MHz) */
+		sr32(0x4A30a31C, 1, 2, 0x0);
+		/* set divisor to 2 */
+		sr32(0x4A30a31C, 16, 4, 0x1);
+		/* set the clock source to active */
+		sr32(0x4A30a110, 0, 1, 0x1);
+		/* enable clocks */
+		sr32(0x4A30a110, 2, 2, 0x3);
+	} else {
+		/* enable software ioreq */
+		sr32(0x4A30a314, 8, 1, 0x1);
+		/* set for PER_DPLL */
+		sr32(0x4A30a314, 1, 2, 0x2);
+		/* set divisor to 16 */
+		sr32(0x4A30a314, 16, 4, 0xf);
+		/* set the clock source to active */
+		sr32(0x4A30a110, 0, 1, 0x1);
+		/* enable clocks */
+		sr32(0x4A30a110, 2, 2, 0x3);
 	}
 }
 
@@ -747,10 +750,8 @@ int misc_init_r(void)
  ******************************************************/
 void wait_for_command_complete(unsigned int wd_base)
 {
-	int pending = 1;
-	do {
-		pending = __raw_readl(wd_base + WWPS);
-	} while (pending);
+	while (__raw_readl(wd_base + WWPS))
+		;
 }
 
 /*******************************************************************
@@ -1201,11 +1202,9 @@ void update_mux(u32 btype, u32 mtype)
 	/* REVISIT  */
 }
 
-/* optionally do something like blinking LED */
 void board_hang(void)
 {
-	while (1)
-		;
+	spam_leds();
 }
 
 int nand_init(void)
