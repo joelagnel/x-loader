@@ -536,6 +536,12 @@ void lock_core_dpll_shadow(void)
 	 */
 	__raw_writel(0x70D | (dpll_param_p->m2 << 11), 0x4A004260);
 
+	/*
+	 * if the EMIF never goes idle, and eg, if ROM enabled USB,
+	 * we loop for a very very long time here becuse shadow updates wait
+	 * until EMIF idle
+	 */
+
 	/* Wait for Freq_Update to get cleared: CM_SHADOW_FREQ_CONFIG1 */
 	while (__raw_readl(0x4A004260) & 1)
 		;

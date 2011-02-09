@@ -438,6 +438,20 @@ static void ddr_init(void)
 	 */
 	configure_core_dpll_no_lock();
 
+	/*
+	 * the following is re-enabled because without the EMIF going idle,
+	 * the shadow DPLL update scheme can delay for minutes until it is
+	 * able to apply the new settings... it waits until EMIF idle.
+	 *
+	 * This is seen in the case the ROM enabled USB boot being tried before
+	 * normal boot over MMC.
+	 */
+
+	/* No IDLE: BUG in SDC */
+	sr32(CM_MEMIF_CLKSTCTRL, 0, 32, 0x2);
+	while ((__raw_readl(CM_MEMIF_CLKSTCTRL) & 0x700) != 0x700)
+		;
+
 	__raw_writel(0, EMIF1_BASE + EMIF_PWR_MGMT_CTRL);
 	__raw_writel(0, EMIF2_BASE + EMIF_PWR_MGMT_CTRL);
 
@@ -645,7 +659,14 @@ void s_init(void)
 {
 	unsigned int rev = omap_revision();
 
+	/*
+	 * this is required to survive the muxconf in the case the ROM
+	 * started up USB OTG
+	 */
+	prcm_init();
+
 	set_muxconf_regs();
+
 	delay(100);
 
 	/* Writing to AuxCR in U-boot using SMI for GP/EMU DEV */
@@ -660,7 +681,6 @@ void s_init(void)
 #if defined(CONFIG_MPU_600) || defined(CONFIG_MPU_1000)
 	scale_vcores();
 #endif
-	prcm_init();
 
 	if (rev != OMAP4430_ES1_0) {
 		if (__raw_readl(0x4805D138) & (1<<22)) {
