@@ -517,6 +517,9 @@ static void ddr_init(void)
 
 	__raw_writel(0, 0x80000000);
 	__raw_writel(0, 0x80000000);
+
+	/* MEMIF Clock Domain -> HW_AUTO */
+	sr32(CM_MEMIF_CLKSTCTRL, 0, 32, 0x3);
 }
 /*****************************************
  * Routine: board_init
