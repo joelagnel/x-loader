@@ -737,8 +737,9 @@ static void enable_all_clocks(void)
 
 	/* Check for DSS Clocks */
 	while (((*(volatile int *)0x4A009100) & 0xF00) != 0xE00)
-		/* Set HW_AUTO transition mode */
-		sr32(CM_DSS_CLKSTCTRL, 0, 32, 0x3);
+		;
+	/* Set HW_AUTO transition mode */
+	sr32(CM_DSS_CLKSTCTRL, 0, 32, 0x3);
 
 	/* Enable SGX clocks */
 	sr32(CM_SGX_CLKSTCTRL, 0, 32, 0x2);
