@@ -527,6 +527,26 @@ static void ddr_init(void)
  *****************************************/
 int board_init(void)
 {
+	unsigned int v;
+
+	/*
+	 * If the ROM has started the OTG stuff, stop it and
+	 * make it look as if uninitialized for Linux or U-Boot
+	 */
+
+	/* hold OTG phy in reset */
+
+	v = __raw_readl(OMAP44XX_GPIO_BASE2 + 0x134);
+	__raw_writel((v & ~(0x01 << 30)), OMAP44XX_GPIO_BASE2 + 0x134);
+
+	v = __raw_readl(OMAP44XX_GPIO_BASE2 + 0x13c);
+	__raw_writel((v & ~(0x01 << 30)), OMAP44XX_GPIO_BASE2 + 0x13c);
+
+	/* kill USB PLL */
+
+	v = __raw_readl(0x4a008100 + 0x80);
+	__raw_writel((v & ~(7 << 0)) | 1, 0x4a008100 + 0x80);
+
 	return 0;
 }
 
