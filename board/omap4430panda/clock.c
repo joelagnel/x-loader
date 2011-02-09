@@ -514,7 +514,7 @@ void lock_core_dpll_shadow(void)
 	struct dpll_param *dpll_param_p = NULL;
 
 	/* Lock the core dpll using freq update method */
-	*(volatile int *)0x4A004120 = 10;	/* CM_CLKMODE_DPLL_CORE */
+	__raw_writel(10, 0x4A004120); /* CM_CLKMODE_DPLL_CORE */
 
 	switch (omap_revision()) {
 	case OMAP4430_ES1_0:
@@ -534,10 +534,10 @@ void lock_core_dpll_shadow(void)
 	/* CM_SHADOW_FREQ_CONFIG1: DLL_OVERRIDE = 1(hack), DLL_RESET = 1,
 	 * DPLL_CORE_M2_DIV =1, DPLL_CORE_DPLL_EN = 0x7, FREQ_UPDATE = 1
 	 */
-	*(volatile int*)0x4A004260 = 0x70D | (dpll_param_p->m2 << 11);
+	__raw_writel(0x70D | (dpll_param_p->m2 << 11), 0x4A004260);
 
 	/* Wait for Freq_Update to get cleared: CM_SHADOW_FREQ_CONFIG1 */
-	while (((*(volatile int*)0x4A004260) & 0x1) == 0x1)
+	while (__raw_readl(0x4A004260) & 1)
 		;
 
 	/* Wait for DPLL to Lock : CM_IDLEST_DPLL_CORE */
@@ -733,7 +733,8 @@ static void enable_all_clocks(void)
 
 	/* Enable DSS clocks */
 	/* PM_DSS_PWRSTCTRL ON State and LogicState = 1 (Retention) */
-	*(volatile int *)0x4A307100 = 0x7; /* DSS_PRM */
+	__raw_writel(7, 0x4A307100); /* DSS_PRM */
+
 	sr32(CM_DSS_CLKSTCTRL, 0, 32, 0x2);
 	sr32(CM_DSS_DSS_CLKCTRL, 0, 32, 0xf02);
 	/* wait_on_value(BIT18|BIT17|BIT16, 0, CM_DSS_DSS_CLKCTRL, LDELAY); */
@@ -741,7 +742,7 @@ static void enable_all_clocks(void)
 	/* wait_on_value(BIT18|BIT17|BIT16, 0, CM_DSS_DEISS_CLKCTRL, LDELAY); */
 
 	/* Check for DSS Clocks */
-	while (((*(volatile int *)0x4A009100) & 0xF00) != 0xE00)
+	while ((__raw_readl(0x4A009100) & 0xF00) != 0xE00)
 		;
 	/* Set HW_AUTO transition mode */
 	sr32(CM_DSS_CLKSTCTRL, 0, 32, 0x3);
@@ -751,7 +752,7 @@ static void enable_all_clocks(void)
 	sr32(CM_SGX_SGX_CLKCTRL, 0, 32, 0x2);
 	/* wait_on_value(BIT18|BIT17|BIT16, 0, CM_SGX_SGX_CLKCTRL, LDELAY); */
 	/* Check for SGX FCLK and ICLK */
-	while ((*(volatile int *)0x4A009200) != 0x302)
+	while (__raw_readl(0x4A009200) != 0x302)
 		;
 	/* sr32(CM_SGX_CLKSTCTRL, 0, 32, 0x0); */
 	/* Enable hsi/unipro/usb clocks */
