@@ -377,10 +377,20 @@
 #define CONTROL_WKUP_PAD1_JTAG_TMS_TMSC		0x0072
 #define CONTROL_WKUP_PAD0_JTAG_TDI		0x0074
 #define CONTROL_WKUP_PAD1_JTAG_TDO		0x0076
-#define CONTROL_PADCONF_WAKEUPEVENT_0		0x007C
+/*
+ * this is an accidental redefinition I think
+ * see earlier in this file
+ * it is not used anywhere yet
+ * #define CONTROL_PADCONF_WAKEUPEVENT_0		0x007C
+*/
 #define CONTROL_SMART1NOPMIO_PADCONF_0		0x05A0
 #define CONTROL_SMART1NOPMIO_PADCONF_1		0x05A4
-#define CONTROL_PADCONF_MODE			0x05A8
+/*
+ * this is an accidental redefinition I think
+ * see earlier in this file
+ * it is not used anywhere yet
+ * #define CONTROL_PADCONF_MODE			0x05A8
+ */
 #define CONTROL_XTAL_OSCILLATOR			0x05AC
 #define CONTROL_CONTROL_I2C_2			0x0604
 #define CONTROL_CONTROL_JTAG			0x0608
