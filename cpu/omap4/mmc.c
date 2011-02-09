@@ -62,21 +62,19 @@ unsigned char mmc_board_init(void)
 
 void mmc_init_stream(void)
 {
-	volatile unsigned int mmc_stat;
-
 	OMAP_HSMMC_CON |= INIT_INITSTREAM;
 
 	OMAP_HSMMC_CMD = MMC_CMD0;
-	do {
-		mmc_stat = OMAP_HSMMC_STAT;
-	} while (!(mmc_stat & CC_MASK));
+
+	while (!(OMAP_HSMMC_STAT & CC_MASK))
+		;
 
 	OMAP_HSMMC_STAT = CC_MASK;
 
 	OMAP_HSMMC_CMD = MMC_CMD0;
-	do {
-		mmc_stat = OMAP_HSMMC_STAT;
-	} while (!(mmc_stat & CC_MASK));
+
+	while (!(OMAP_HSMMC_STAT & CC_MASK))
+		;
 
 	OMAP_HSMMC_STAT = OMAP_HSMMC_STAT;
 	OMAP_HSMMC_CON &= ~INIT_INITSTREAM;
@@ -148,7 +146,7 @@ unsigned char mmc_init_setup(void)
 unsigned char mmc_send_cmd(unsigned int cmd, unsigned int arg,
 			   unsigned int *response)
 {
-	volatile unsigned int mmc_stat;
+	unsigned int mmc_stat;
 
 	while ((OMAP_HSMMC_PSTATE & DATI_MASK) == DATI_CMDDIS)
 		;
@@ -161,9 +159,9 @@ unsigned char mmc_send_cmd(unsigned int cmd, unsigned int arg,
 	    DE_DISABLE;
 
 	while (1) {
-		do {
-			mmc_stat = OMAP_HSMMC_STAT;
-		} while (mmc_stat == 0);
+		mmc_stat = OMAP_HSMMC_STAT;
+		if (mmc_stat == 0)
+			continue;
 
 		if ((mmc_stat & ERRI_MASK) != 0)
 			return (unsigned char) mmc_stat;
@@ -184,16 +182,16 @@ unsigned char mmc_send_cmd(unsigned int cmd, unsigned int arg,
 
 unsigned char mmc_read_data(unsigned int *output_buf)
 {
-	volatile unsigned int mmc_stat;
+	unsigned int mmc_stat;
 	unsigned int read_count = 0;
 
 	/*
 	 * Start Polled Read
 	 */
 	while (1) {
-		do {
-			mmc_stat = OMAP_HSMMC_STAT;
-		} while (mmc_stat == 0);
+		mmc_stat = OMAP_HSMMC_STAT;
+		if (mmc_stat == 0)
+			continue;
 
 		if ((mmc_stat & ERRI_MASK) != 0)
 			return (unsigned char) mmc_stat;
