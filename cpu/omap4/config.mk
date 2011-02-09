@@ -20,7 +20,7 @@
 # MA 02111-1307 USA
 #
 PLATFORM_RELFLAGS += -fno-strict-aliasing  -fno-common -ffixed-r8 \
-	-msoft-float
+	-msoft-float -Werror
 
 PLATFORM_CPPFLAGS += -march=armv7-a
 # =========================================================================
