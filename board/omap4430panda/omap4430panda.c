@@ -1231,7 +1231,10 @@ void update_mux(u32 btype, u32 mtype)
 
 /* optionally do something like blinking LED */
 void board_hang(void)
-{ while (0) {};}
+{
+	while (1)
+		;
+}
 
 int nand_init(void)
 {
