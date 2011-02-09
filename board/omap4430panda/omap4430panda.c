@@ -248,16 +248,18 @@ void reset_phy(unsigned int base)
 
 void spam_leds(void)
 {
-	unsigned int v = __raw_readl(OMAP44XX_GPIO_BASE1 + 0x134);
+	unsigned int v = __raw_readl(OMAP44XX_GPIO_BASE1 + __GPIO_OE);
 
 	/* set both LED gpio to output */
-	__raw_writel((v & ~(0x03 << 7)), OMAP44XX_GPIO_BASE1 + 0x134);
+	__raw_writel((v & ~(0x03 << 7)), OMAP44XX_GPIO_BASE1 + __GPIO_OE);
 
-	v = __raw_readl(OMAP44XX_GPIO_BASE1 + 0x13c);
+	v = __raw_readl(OMAP44XX_GPIO_BASE1 + __GPIO_DATAOUT);
 	while (1) {
-		__raw_writel((v & ~(0x03 << 7)), OMAP44XX_GPIO_BASE1 + 0x13c);
+		__raw_writel((v & ~(0x03 << 7)),
+					  OMAP44XX_GPIO_BASE1 + __GPIO_DATAOUT);
 		big_delay(3000000);
-		__raw_writel((v | (0x03 << 7)), OMAP44XX_GPIO_BASE1 + 0x13c);
+		__raw_writel((v | (0x03 << 7)),
+					  OMAP44XX_GPIO_BASE1 + __GPIO_DATAOUT);
 		big_delay(3000000);
 	}
 }
@@ -399,27 +401,27 @@ static void ddr_init(void)
 
 	case OMAP4430_ES1_0:
 		/* Configurte the Control Module DDRIO device */
-		__raw_writel(0x1c1c1c1c, 0x4A100638);
-		__raw_writel(0x1c1c1c1c, 0x4A10063c);
-		__raw_writel(0x1c1c1c1c, 0x4A100640);
-		__raw_writel(0x1c1c1c1c, 0x4A100648);
-		__raw_writel(0x1c1c1c1c, 0x4A10064c);
-		__raw_writel(0x1c1c1c1c, 0x4A100650);
-		/* LPDDR2IO set to NMOS PTV */
-		__raw_writel(0x00ffc000, 0x4A100704);
+		__raw_writel(0x1c1c1c1c, OMAP44XX_CONTROL_LPDDR2IO1_0);
+		__raw_writel(0x1c1c1c1c, OMAP44XX_CONTROL_LPDDR2IO1_1);
+		__raw_writel(0x1c1c1c1c, OMAP44XX_CONTROL_LPDDR2IO1_2);
+		__raw_writel(0x1c1c1c1c, OMAP44XX_CONTROL_LPDDR2IO2_0);
+		__raw_writel(0x1c1c1c1c, OMAP44XX_CONTROL_LPDDR2IO2_1);
+		__raw_writel(0x1c1c1c1c, OMAP44XX_CONTROL_LPDDR2IO2_2);
+		/* LPDDR2IO set to NMOS PTV  !!! really EFUSE2? */
+		__raw_writel(0x00ffc000, OMAP44XX_CONTROL_EFUSE_2);
 
 		/* Both EMIFs 128 byte interleaved */
 		__raw_writel(0x80540300, DMM_BASE + DMM_LISA_MAP_0);
 		break;
 	case OMAP4430_ES2_0:
-		__raw_writel(0x9e9e9e9e, 0x4A100638);
-		__raw_writel(0x9e9e9e9e, 0x4A10063c);
-		__raw_writel(0x9e9e9e9e, 0x4A100640);
-		__raw_writel(0x9e9e9e9e, 0x4A100648);
-		__raw_writel(0x9e9e9e9e, 0x4A10064c);
-		__raw_writel(0x9e9e9e9e, 0x4A100650);
-		/* LPDDR2IO set to NMOS PTV */
-		__raw_writel(0x00ffc000, 0x4A100704);
+		__raw_writel(0x9e9e9e9e, OMAP44XX_CONTROL_LPDDR2IO1_0);
+		__raw_writel(0x9e9e9e9e, OMAP44XX_CONTROL_LPDDR2IO1_1);
+		__raw_writel(0x9e9e9e9e, OMAP44XX_CONTROL_LPDDR2IO1_2);
+		__raw_writel(0x9e9e9e9e, OMAP44XX_CONTROL_LPDDR2IO2_0);
+		__raw_writel(0x9e9e9e9e, OMAP44XX_CONTROL_LPDDR2IO2_1);
+		__raw_writel(0x9e9e9e9e, OMAP44XX_CONTROL_LPDDR2IO2_2);
+		/* LPDDR2IO set to NMOS PTV  !!! really EFUSE2? */
+		__raw_writel(0x00ffc000, OMAP44XX_CONTROL_EFUSE_2);
 		/* fall thru */
 	default:
 		/* Both EMIFs 128 byte interleaved */
@@ -485,8 +487,8 @@ static void ddr_init(void)
 
 	/* Put the Core Subsystem PD to ON State */
 
-	__raw_writel(0x80000000, EMIF1_BASE + EMIF_PWR_MGMT_CTRL);
-	__raw_writel(0x80000000, EMIF2_BASE + EMIF_PWR_MGMT_CTRL);
+	__raw_writel(1 << 31, EMIF1_BASE + EMIF_PWR_MGMT_CTRL);
+	__raw_writel(1 << 31, EMIF2_BASE + EMIF_PWR_MGMT_CTRL);
 
 	/* SYSTEM BUG:
 	 * In n a specific situation, the OCP interface between the DMM and
@@ -517,8 +519,8 @@ static void ddr_init(void)
 	reset_phy(EMIF1_BASE);
 	reset_phy(EMIF2_BASE);
 
-	__raw_writel(0, 0x80000000);
-	__raw_writel(0, 0x80000000);
+	__raw_writel(0, OMAP44XX_SDRC_CS0);
+	__raw_writel(0, OMAP44XX_SDRC_CS0);
 
 	/* MEMIF Clock Domain -> HW_AUTO */
 	sr32(CM_MEMIF_CLKSTCTRL, 0, 32, 0x3);
@@ -536,18 +538,18 @@ int board_init(void)
 	 * make it look as if uninitialized for Linux or U-Boot
 	 */
 
-	/* hold OTG phy in reset */
+	/* hold OTG phy in reset (GPIO_62 -> active low reset) */
 
-	v = __raw_readl(OMAP44XX_GPIO_BASE2 + 0x134);
-	__raw_writel((v & ~(0x01 << 30)), OMAP44XX_GPIO_BASE2 + 0x134);
+	v = __raw_readl(OMAP44XX_GPIO_BASE2 + __GPIO_OE);
+	__raw_writel((v & ~(1 << 30)), OMAP44XX_GPIO_BASE2 + __GPIO_OE);
 
-	v = __raw_readl(OMAP44XX_GPIO_BASE2 + 0x13c);
-	__raw_writel((v & ~(0x01 << 30)), OMAP44XX_GPIO_BASE2 + 0x13c);
+	v = __raw_readl(OMAP44XX_GPIO_BASE2 + __GPIO_DATAOUT);
+	__raw_writel((v & ~(1 << 30)), OMAP44XX_GPIO_BASE2 + __GPIO_DATAOUT);
 
 	/* kill USB PLL */
 
-	v = __raw_readl(0x4a008100 + 0x80);
-	__raw_writel((v & ~(7 << 0)) | 1, 0x4a008100 + 0x80);
+	v = __raw_readl(CM_CLKMODE_DPLL_USB);
+	__raw_writel((v & ~7) | 1, CM_CLKMODE_DPLL_USB);
 
 	return 0;
 }
@@ -613,62 +615,60 @@ void try_unlock_memory(void)
 static int scale_vcores(void)
 {
 	unsigned int rev = omap_revision();
+
 	/* For VC bypass only VCOREx_CGF_FORCE  is necessary and
 	 * VCOREx_CFG_VOLTAGE  changes can be discarded
 	 */
-	/* PRM_VC_CFG_I2C_MODE */
-	__raw_writel(0, 0x4A307BA8);
-
-	/* PRM_VC_CFG_I2C_CLK */
-	__raw_writel(0x6026, 0x4A307BAC);
+	__raw_writel(0, OMAP44XX_PRM_VC_CFG_I2C_MODE);
+	__raw_writel(0x6026, OMAP44XX_PRM_VC_CFG_I2C_CLK);
 
 	/* set VCORE1 force VSEL */
-	/* PRM_VC_VAL_BYPASS) */
 	if (rev == OMAP4430_ES1_0)
-		__raw_writel(0x3B5512, 0x4A307BA0);
+		__raw_writel(0x3B5512, OMAP44XX_PRM_VC_VAL_BYPASS);
 	else
-		__raw_writel(0x3A5512, 0x4A307BA0);
+		__raw_writel(0x3A5512, OMAP44XX_PRM_VC_VAL_BYPASS);
 
-	__raw_writel(__raw_readl(0x4A307BA0) | 0x1000000, 0x4A307BA0);
-	while (__raw_readl(0x4A307BA0) & 0x1000000)
+	__raw_writel(__raw_readl(OMAP44XX_PRM_VC_VAL_BYPASS) | 0x1000000,
+						    OMAP44XX_PRM_VC_VAL_BYPASS);
+	while (__raw_readl(OMAP44XX_PRM_VC_VAL_BYPASS) & 0x1000000)
 		;
 
-	/* PRM_IRQSTATUS_MPU */
-	__raw_writel(__raw_readl(0x4A306010), 0x4A306010);
+	__raw_writel(__raw_readl(OMAP44XX_PRM_IRQSTATUS_MPU_A9),
+						 OMAP44XX_PRM_IRQSTATUS_MPU_A9);
 
 	/* FIXME: set VCORE2 force VSEL, Check the reset value */
-	/* PRM_VC_VAL_BYPASS) */
 	if (rev == OMAP4430_ES1_0)
-		__raw_writel(0x315B12, 0x4A307BA0);
+		__raw_writel(0x315B12, OMAP44XX_PRM_VC_VAL_BYPASS);
 	else
-		__raw_writel(0x295B12, 0x4A307BA0);
+		__raw_writel(0x295B12, OMAP44XX_PRM_VC_VAL_BYPASS);
 
-	__raw_writel(__raw_readl(0x4A307BA0) | 0x1000000, 0x4A307BA0);
-	while (__raw_readl(0x4A307BA0) & 0x1000000)
+	__raw_writel(__raw_readl(OMAP44XX_PRM_VC_VAL_BYPASS) | 0x1000000,
+						    OMAP44XX_PRM_VC_VAL_BYPASS);
+	while (__raw_readl(OMAP44XX_PRM_VC_VAL_BYPASS) & 0x1000000)
 		;
 
-	/* PRM_IRQSTATUS_MPU */
-	__raw_writel(__raw_readl(0x4A306010), 0x4A306010);
+	__raw_writel(__raw_readl(OMAP44XX_PRM_IRQSTATUS_MPU_A9),
+						 OMAP44XX_PRM_IRQSTATUS_MPU_A9);
 
 	/*/set VCORE3 force VSEL */
-	/* PRM_VC_VAL_BYPASS */
 	switch (rev) {
 	case OMAP4430_ES1_0:
-		__raw_writel(0x316112, 0x4A307BA0);
+		__raw_writel(0x316112, OMAP44XX_PRM_VC_VAL_BYPASS);
 		break;
 	case OMAP4430_ES2_0:
-		__raw_writel(0x296112, 0x4A307BA0);
+		__raw_writel(0x296112, OMAP44XX_PRM_VC_VAL_BYPASS);
 		break;
 	case OMAP4430_ES2_1:
-		__raw_writel(0x2A6112, 0x4A307BA0);
+		__raw_writel(0x2A6112, OMAP44XX_PRM_VC_VAL_BYPASS);
 		break;
 	}
-	__raw_writel(__raw_readl(0x4A307BA0) | 0x1000000, 0x4A307BA0);
-	while (__raw_readl(0x4A307BA0) & 0x1000000)
+	__raw_writel(__raw_readl(OMAP44XX_PRM_VC_VAL_BYPASS) | 0x1000000,
+						    OMAP44XX_PRM_VC_VAL_BYPASS);
+	while (__raw_readl(OMAP44XX_PRM_VC_VAL_BYPASS) & 0x1000000)
 		;
 
-	/* PRM_IRQSTATUS_MPU */
-	__raw_writel(__raw_readl(0x4A306010), 0x4A306010);
+	__raw_writel(__raw_readl(OMAP44XX_PRM_IRQSTATUS_MPU_A9),
+						 OMAP44XX_PRM_IRQSTATUS_MPU_A9);
 
 	return 0;
 }
@@ -695,7 +695,7 @@ void s_init(void)
 	delay(100);
 
 	/* Writing to AuxCR in U-boot using SMI for GP/EMU DEV */
-	/* Currently SMI in Kernel on ES2 devices seems to have an isse
+	/* Currently SMI in Kernel on ES2 devices seems to have an issue
 	 * Once that is resolved, we can postpone this config to kernel
 	 */
 	/* setup_auxcr(get_device_type(), external_boot); */
@@ -709,29 +709,29 @@ void s_init(void)
 
 	if (rev == OMAP4430_ES1_0)
 		return;
-		
-	if (__raw_readl(0x4805D138) & (1 << 22)) {
+
+	if (__raw_readl(OMAP44XX_GPIO_BASE6 + __GPIO_DATAIN) & (1 << 22)) {
 		/* enable software ioreq */
-		sr32(0x4A30a31C, 8, 1, 0x1);
+		sr32(OMAP44XX_SCRM_AUXCLK3, 8, 1, 0x1);
 		/* set for sys_clk (38.4MHz) */
-		sr32(0x4A30a31C, 1, 2, 0x0);
+		sr32(OMAP44XX_SCRM_AUXCLK3, 1, 2, 0x0);
 		/* set divisor to 2 */
-		sr32(0x4A30a31C, 16, 4, 0x1);
+		sr32(OMAP44XX_SCRM_AUXCLK3, 16, 4, 0x1);
 		/* set the clock source to active */
-		sr32(0x4A30a110, 0, 1, 0x1);
+		sr32(OMAP44XX_SCRM_ALTCLKSRC, 0, 1, 0x1);
 		/* enable clocks */
-		sr32(0x4A30a110, 2, 2, 0x3);
+		sr32(OMAP44XX_SCRM_ALTCLKSRC, 2, 2, 0x3);
 	} else {
 		/* enable software ioreq */
-		sr32(0x4A30a314, 8, 1, 0x1);
+		sr32(OMAP44XX_SCRM_AUXCLK1, 8, 1, 0x1);
 		/* set for PER_DPLL */
-		sr32(0x4A30a314, 1, 2, 0x2);
+		sr32(OMAP44XX_SCRM_AUXCLK1, 1, 2, 0x2);
 		/* set divisor to 16 */
-		sr32(0x4A30a314, 16, 4, 0xf);
+		sr32(OMAP44XX_SCRM_AUXCLK1, 16, 4, 0xf);
 		/* set the clock source to active */
-		sr32(0x4A30a110, 0, 1, 0x1);
+		sr32(OMAP44XX_SCRM_ALTCLKSRC, 0, 1, 0x1);
 		/* enable clocks */
-		sr32(0x4A30a110, 2, 2, 0x3);
+		sr32(OMAP44XX_SCRM_ALTCLKSRC, 2, 2, 0x3);
 	}
 }
 
@@ -768,32 +768,6 @@ int dram_init(void)
 {
 	return 0;
 }
-
-#define	OMAP44XX_WKUP_CTRL_BASE	0x4A31E000
-
-#if 1
-#define M0_SAFE M0
-#define M1_SAFE M1
-#define M2_SAFE M2
-#define M4_SAFE M4
-#define M7_SAFE M7
-#define M3_SAFE M3
-#define M5_SAFE M5
-#define M6_SAFE M6
-#else
-#define M0_SAFE M7
-#define M1_SAFE M7
-#define M2_SAFE M7
-#define M4_SAFE M7
-#define M7_SAFE M7
-#define M3_SAFE M7
-#define M5_SAFE M7
-#define M6_SAFE M7
-#endif
-#define		MV(OFFSET, VALUE) \
-			__raw_writew((VALUE), OMAP44XX_CTRL_BASE + (OFFSET));
-#define		MV1(OFFSET, VALUE) \
-		      __raw_writew((VALUE), OMAP44XX_WKUP_CTRL_BASE + (OFFSET));
 
 #define		CP(x)	(CONTROL_PADCONF_##x)
 #define		WK(x)	(CONTROL_WKUP_##x)
