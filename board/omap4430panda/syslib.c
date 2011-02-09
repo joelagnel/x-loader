@@ -37,8 +37,8 @@
  *************************************************************/
 void sdelay(unsigned long loops)
 {
-	__asm__ volatile ("1:\n" "subs %0, %1, #1\n"  
-					  "bne 1b":"=r" (loops):"0"(loops));
+	__asm__ volatile ("1:\n" "subs %0, %1, #1\n"
+					  "bne 1b" : "=r" (loops) : "0"(loops));
 }
 
 /*****************************************************************
@@ -65,9 +65,9 @@ u32 wait_on_value(u32 read_bit_mask, u32 match_value, u32 read_addr, u32 bound)
 		++i;
 		val = __raw_readl(read_addr) & read_bit_mask;
 		if (val == match_value)
-			return (1);
+			return 1;
 		if (i == bound)
-			return (0);
+			return 0;
 	} while (1);
 }
 

@@ -45,7 +45,7 @@
 #define C1_HIGH_VECTORS	(1<<13) /* location of vectors: low/high addresses */
 #define RESERVED_1	(0xf << 3)	/* must be 111b for R/W */
 
-int cpu_init (void)
+int cpu_init(void)
 {
 	return 0;
 }
@@ -63,20 +63,23 @@ unsigned int cortex_a9_rev(void)
 
 unsigned int omap_revision(void)
 {
-	unsigned int chip_rev = 0;
-	unsigned int rev = cortex_a9_rev();
+	switch (cortex_a9_rev()) {
 
-	switch(rev) {
 	case 0x410FC091:
 		return OMAP4430_ES1_0;
+
 	case 0x411FC092:
-		chip_rev = (__raw_readl(OMAP44XX_CTRL_ID_CODE)  >> 28) & 0xF;
-		if (chip_rev == 3)
-			return OMAP4430_ES2_1;
-		else if (chip_rev >= 4)
-			return OMAP4430_ES2_2;
-		else
+		switch ((__raw_readl(OMAP44XX_CTRL_ID_CODE) >> 28) & 0xF) {
+		case 0:
+		case 1:
+		case 2:
 			return OMAP4430_ES2_0;
+		case 3:
+			return OMAP4430_ES2_1;
+		default:
+			return OMAP4430_ES2_2;
+		}
 	}
+
 	return OMAP4430_SILICON_ID_INVALID;
 }

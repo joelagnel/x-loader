@@ -47,7 +47,7 @@ _start:
 
 _hang:
  	.word do_hang
-	
+
 	.word 0x12345678
 	.word 0x12345678
 	.word 0x12345678

@@ -103,8 +103,8 @@
 #define MR1_NWR7			5
 #define MR1_NWR8			6
 
-#define MR1_VALUE	(MR1_NWR3 << 5) | (MR1_WC << 4) | (MR1_BT_SEQ << 3)  \
-							| (MR1_BL8 << 0)
+#define MR1_VALUE	((MR1_NWR3 << 5) | (MR1_WC << 4) | (MR1_BT_SEQ << 3)  \
+							| (MR1_BL8 << 0))
 
 /* defines for MR2 */
 #define MR2_RL3_WL1			1
@@ -234,7 +234,7 @@ static inline void delay(unsigned long loops)
 void big_delay(unsigned int count)
 {
 	int i;
-	for (i=0; i<count; i++)
+	for (i = 0; i < count; i++)
 		delay(1);
 }
 
@@ -248,7 +248,7 @@ static int emif_config(unsigned int base)
 	const struct ddr_regs *ddr_regs;
 	rev = omap_revision();
 
-	if(rev == OMAP4430_ES1_0)
+	if (rev == OMAP4430_ES1_0)
 		ddr_regs = &ddr_regs_380_mhz;
 	else if (rev == OMAP4430_ES2_0)
 		ddr_regs = &ddr_regs_200_mhz_2cs;
@@ -261,7 +261,7 @@ static int emif_config(unsigned int base)
 	 * EMIF_SDRAM_CONFIG[13:10] REG_CL = 3
 	 * EMIF_SDRAM_CONFIG[6:4] REG_IBANK = 3 - 8 banks
 	 * EMIF_SDRAM_CONFIG[3] REG_EBANK = 0 - CS0
- 	 * EMIF_SDRAM_CONFIG[2:0] REG_PAGESIZE = 2  - 512- 9 column
+	 * EMIF_SDRAM_CONFIG[2:0] REG_PAGESIZE = 2  - 512- 9 column
 	 * JDEC specs - S4-2Gb --8 banks -- R0-R13, C0-c8
 	 */
 	*(volatile int*)(base + EMIF_LPDDR2_NVM_CONFIG) &= 0xBFFFFFFF;
@@ -373,8 +373,7 @@ static void ddr_init(void)
 	unsigned int base_addr, rev;
 	rev = omap_revision();
 
-	if (rev == OMAP4430_ES1_0)
-	{
+	if (rev == OMAP4430_ES1_0) {
 		/* Configurte the Control Module DDRIO device */
 		__raw_writel(0x1c1c1c1c, 0x4A100638);
 		__raw_writel(0x1c1c1c1c, 0x4A10063c);
@@ -446,7 +445,7 @@ static void ddr_init(void)
 	/* PHY control values */
 
 	sr32(CM_MEMIF_EMIF_1_CLKCTRL, 0, 32, 0x1);
-        sr32(CM_MEMIF_EMIF_2_CLKCTRL, 0, 32, 0x1);
+	sr32(CM_MEMIF_EMIF_2_CLKCTRL, 0, 32, 0x1);
 
 	/* Put the Core Subsystem PD to ON State */
 
@@ -505,7 +504,7 @@ int board_init(void)
 u32 get_mem_type(void)
 {
 	/* no nand, so return GPMC_NONE */
-	return GPMC_NONE;	
+	return GPMC_NONE;
 }
 
 /*****************************************
@@ -640,20 +639,29 @@ void s_init(void)
 #endif	
 	prcm_init();
 
-	if(rev != OMAP4430_ES1_0) {
+	if (rev != OMAP4430_ES1_0) {
 		if (__raw_readl(0x4805D138) & (1<<22)) {
-			sr32(0x4A30a31C, 8, 1, 0x1);  /* enable software ioreq */
-			sr32(0x4A30a31C, 1, 2, 0x0);  /* set for sys_clk (38.4MHz) */
-			sr32(0x4A30a31C, 16, 4, 0x1); /* set divisor to 2 */
-			sr32(0x4A30a110, 0, 1, 0x1);  /* set the clock source to active */
-			sr32(0x4A30a110, 2, 2, 0x3);  /* enable clocks */
-		}
-		else {
-			sr32(0x4A30a314, 8, 1, 0x1); /* enable software ioreq */
-			sr32(0x4A30a314, 1, 2, 0x2); /* set for PER_DPLL */
-			sr32(0x4A30a314, 16, 4, 0xf); /* set divisor to 16 */
-			sr32(0x4A30a110, 0, 1, 0x1); /* set the clock source to active */
-			sr32(0x4A30a110, 2, 2, 0x3); /* enable clocks */
+			/* enable software ioreq */
+			sr32(0x4A30a31C, 8, 1, 0x1);
+			/* set for sys_clk (38.4MHz) */
+			sr32(0x4A30a31C, 1, 2, 0x0);
+			/* set divisor to 2 */
+			sr32(0x4A30a31C, 16, 4, 0x1);
+			/* set the clock source to active */
+			sr32(0x4A30a110, 0, 1, 0x1);
+			/* enable clocks */
+			sr32(0x4A30a110, 2, 2, 0x3);
+		} else {
+			/* enable software ioreq */
+			sr32(0x4A30a314, 8, 1, 0x1);
+			/* set for PER_DPLL */
+			sr32(0x4A30a314, 1, 2, 0x2);
+			/* set divisor to 16 */
+			sr32(0x4A30a314, 16, 4, 0xf);
+			/* set the clock source to active */
+			sr32(0x4A30a110, 0, 1, 0x1);
+			/* enable clocks */
+			sr32(0x4A30a110, 2, 2, 0x3);
 		}
 	}
 
@@ -1222,7 +1230,7 @@ void update_mux(u32 btype, u32 mtype)
 }
 
 /* optionally do something like blinking LED */
-void board_hang (void)
+void board_hang(void)
 { while (0) {};}
 
 int nand_init(void)
