@@ -236,6 +236,8 @@ static struct ch_chsettings_nochram config_header
 #endif
 
 
+#define die(...) do { printf(__VA_ARGS__); exit(1); } while (0);
+
 int main(int argc, char *argv[])
 {
 	int	i;
@@ -266,8 +268,7 @@ int main(int argc, char *argv[])
 	/* Open the input file. */
 	ifile = fopen(ifname, "rb");
 	if (ifile == NULL) {
-		printf("Cannot open %s\n", ifname);
-		return 1;
+		die("Cannot open %s\n", ifname);
 	}
 
 	/* Get file length. */
@@ -277,9 +278,8 @@ int main(int argc, char *argv[])
 	/* Open the output file and write it. */
 	ofile = fopen(ofname, "wb");
 	if (ofile == NULL) {
-		printf("Cannot open %s\n", ofname);
 		fclose(ifile);
-		return 1;
+		die("Cannot open %s\n", ofname);
 	}
 
 	/* Pad 1 sector of zeroes. */
