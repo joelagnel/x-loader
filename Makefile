@@ -182,7 +182,7 @@ oneboot:	$(obj)x-load.bin
 		scripts/mkoneboot.sh
 
 $(obj)signGP:	scripts/signGP.c
-		gcc -Wall -g -O3 -o $(obj)signGP  $<
+		$(HOSTCC) $(HOSTCFLAGS) -o $(obj)signGP  $<
 
 #########################################################################
 else
