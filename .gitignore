@@ -24,6 +24,7 @@
 x-load
 x-load.map
 x-load.bin
+x-load.bin.ift
 System.map
 include/asm/arch
 include/asm/proc
