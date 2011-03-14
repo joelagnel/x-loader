@@ -289,13 +289,6 @@ int main(int argc, char *argv[])
 		pdie("fopen");
 	}
 
-	/* Pad 1 sector of zeroes. */
-#if 0
-	ch = 0x00;
-	for (i = 0; i < 0x200; i++)
-		fwrite(&ch, 1, 1, ofile);
-#endif
-
 	if (ch_add)
 		fwrite(&config_header, 1, 512, ofile);
 
