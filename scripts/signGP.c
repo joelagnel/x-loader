@@ -236,7 +236,7 @@ static struct ch_chsettings_nochram config_header
 #endif
 
 
-#define die(...) do { printf(__VA_ARGS__); exit(1); } while (0);
+#define die(...) do { fprintf(stderr, __VA_ARGS__); exit(1); } while (0);
 
 int main(int argc, char *argv[])
 {
