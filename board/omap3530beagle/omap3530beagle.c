@@ -212,6 +212,7 @@ u32 cpu_is_3410(void)
  *		GPIO173, GPIO172, GPIO171: 1 1 0 => C1/2/3
  *		GPIO173, GPIO172, GPIO171: 1 0 1 => C4
  *		GPIO173, GPIO172, GPIO171: 0 0 0 => XM
+ *		default                          => XM
  ******************************************/
 int beagle_revision(void)
 {
@@ -227,6 +228,18 @@ int beagle_revision(void)
 	rev = omap_get_gpio_datain(173) << 2 |
 		omap_get_gpio_datain(172) << 1 |
 		omap_get_gpio_datain(171);
+
+	/* Default newer board revisions to XM */
+	switch(rev) {
+	case REVISION_AXBX:
+	case REVISION_CX:
+	case REVISION_C4:
+		break;
+	case REVISION_XM:
+	default:
+		rev = REVISION_XM;
+	}
+
 	omap_free_gpio(171);
 	omap_free_gpio(172);
 	omap_free_gpio(173);
@@ -690,7 +703,7 @@ int misc_init_r(void)
 			printf("Beagle Rev C4\n");
 		break;
 	case REVISION_XM:
-		printf("Beagle xM Rev A\n");
+		printf("Beagle xM\n");
 		break;
 	default:
 		printf("Beagle unknown 0x%02x\n", rev);
