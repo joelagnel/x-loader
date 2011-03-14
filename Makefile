@@ -148,11 +148,9 @@ __LIBS := $(subst $(obj),,$(LIBS))
 #########################################################################
 #########################################################################
 
-ALL = $(obj)x-load.bin $(obj)System.map
+ALL = $(obj)x-load.bin.ift $(obj)System.map
 
-all:		$(ALL)
-
-ift:	$(ALL) $(obj)x-load.bin.ift
+all ift:	$(ALL)
 
 $(obj)x-load.bin.ift: $(obj)signGP $(obj)System.map $(obj)x-load.bin
 	$(obj)./signGP $(obj)x-load.bin $(TEXT_BASE) $(CONFIG_HEADER)
