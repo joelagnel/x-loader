@@ -290,17 +290,24 @@ int main(int argc, char *argv[])
 	}
 
 	if (ch_add)
-		fwrite(&config_header, 1, 512, ofile);
+		if (fwrite(&config_header, 1, 512, ofile) <= 0)
+			pdie("fwrite");
 
-	fwrite(&len, 1, 4, ofile);
-	fwrite(&loadaddr, 1, 4, ofile);
+	if (fwrite(&len, 1, 4, ofile) <= 0)
+		pdie("fwrite");
+	if (fwrite(&loadaddr, 1, 4, ofile) <= 0)
+		pdie("fwrite");
 	for (i = 0; i < len; i++) {
-		fread(&ch, 1, 1, ifile);
-		fwrite(&ch, 1, 1, ofile);
+		if (fread(&ch, 1, 1, ifile) <= 0)
+		    pdie("fread");
+		if (fwrite(&ch, 1, 1, ofile) <= 0)
+		    pdie("fwrite");
 	}
 
-	fclose(ifile);
-	fclose(ofile);
+	if (!fclose(ifile))
+		perror("warning: fclose");
+	if (!fclose(ofile))
+		perror("warning: fclose");
 
 	return 0;
 }
