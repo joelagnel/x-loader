@@ -82,6 +82,9 @@ void start_armboot (void)
  	int size;
 	uchar *buf;
 	int *first_instruction;
+#if defined(CFG_ONENAND) || defined(CFG_NAND_K9F1G08R0A)
+	int i;
+#endif
 
    	for (init_fnc_ptr = init_sequence; *init_fnc_ptr; ++init_fnc_ptr)
 		if ((*init_fnc_ptr)())
