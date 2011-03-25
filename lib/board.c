@@ -36,7 +36,7 @@
 #include <asm/arch/mem.h>
 
 const char version_string[] =
-	"Texas Instruments X-Loader 1.4.4ss (" __DATE__ " - " __TIME__ ")";
+	"Texas Instruments X-Loader 1.5.0 (" __DATE__ " - " __TIME__ ")";
 
 int print_info(void)
 {
