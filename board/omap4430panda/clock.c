@@ -715,6 +715,8 @@ static void enable_all_clocks(void)
 	/* Enable SGX clocks */
 	sr32(CM_SGX_CLKSTCTRL, 0, 32, 0x2);
 	sr32(CM_SGX_SGX_CLKCTRL, 0, 32, 0x2);
+	/* Select DPLL PER CLOCK as source for SGX FCLK */
+	sr32(CM_SGX_SGX_CLKCTRL, 24, 1, 0x1);
 	/* Check for SGX FCLK and ICLK */
 	while (__raw_readl(0x4A009200) != 0x302)
 		;
