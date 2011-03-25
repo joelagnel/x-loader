@@ -659,6 +659,7 @@ static int scale_vcores(void)
 		__raw_writel(0x296112, OMAP44XX_PRM_VC_VAL_BYPASS);
 		break;
 	case OMAP4430_ES2_1:
+	default:
 		__raw_writel(0x2A6112, OMAP44XX_PRM_VC_VAL_BYPASS);
 		break;
 	}

@@ -415,6 +415,7 @@ static void configure_core_dpll(int clk_index)
 		dpll_param_p = &core_dpll_param[clk_index];
 		break;
 	case OMAP4430_ES2_1:
+	default:
 		dpll_param_p = &core_dpll_param_ddr400[clk_index];
 		break;
 	}
@@ -475,10 +476,8 @@ void configure_core_dpll_no_lock(void)
 		dpll_param_p = &core_dpll_param[clk_index];
 		break;
 	case OMAP4430_ES2_1:
-		dpll_param_p = &core_dpll_param_ddr400[clk_index];
-		break;
 	default:
-		/* we are screwed */
+		dpll_param_p = &core_dpll_param_ddr400[clk_index];
 		break;
 	}
 
@@ -524,10 +523,8 @@ void lock_core_dpll_shadow(void)
 		dpll_param_p = &core_dpll_param[6];
 		break;
 	case OMAP4430_ES2_1:
-		dpll_param_p = &core_dpll_param_ddr400[6];
-		break;
 	default:
-		/* we are screwed */
+		dpll_param_p = &core_dpll_param_ddr400[6];
 		break;
 	}
 
