@@ -689,6 +689,11 @@ void s_init(void)
 	 * this is required to survive the muxconf in the case the ROM
 	 * started up USB OTG
 	 */
+/* Set VCORE1 = 1.3 V, VCORE2 = VCORE3 = 1.21V */
+#if defined(CONFIG_MPU_600) || defined(CONFIG_MPU_1000)
+	scale_vcores();
+#endif
+
 	prcm_init();
 
 	set_muxconf_regs();
@@ -702,11 +707,6 @@ void s_init(void)
 	/* setup_auxcr(get_device_type(), external_boot); */
 
 	ddr_init();
-
-/* Set VCORE1 = 1.3 V, VCORE2 = VCORE3 = 1.21V */
-#if defined(CONFIG_MPU_600) || defined(CONFIG_MPU_1000)
-	scale_vcores();
-#endif
 
 	if (rev == OMAP4430_ES1_0)
 		return;
