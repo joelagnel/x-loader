@@ -56,6 +56,10 @@ ifeq ($(BOARD), omap2430sdp)
 COBJS    += k9k1216.o
 endif
 
+ifeq ($(BOARD), igep00x0)
+COBJS    += onenand.o
+endif
+
 ## Disabled for now:
 ##	  cs8900.o ct69000.o dataflash.o dc2114x.o ds1722.o \
 ##	  lan91c96.o mw_eeprom.o natsemi.o \

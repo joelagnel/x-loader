@@ -109,7 +109,7 @@
 /*
  * Board oneNAND Info.
  */
-#define CONFIG_ONENAND                  1
+#define CFG_ONENAND		1
 
 #define ONENAND_BASE	ONENAND_MAP
 #define ONENAND_ADDR	ONENAND_BASE
