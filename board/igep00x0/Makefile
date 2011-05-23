@@ -25,7 +25,7 @@ include $(TOPDIR)/config.mk
 
 LIB	= $(obj)lib$(BOARD).a
 
-COBJS	:= igep0020.o
+COBJS	:= igep00x0.o
 SOBJS	:= platform.o
 
 SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)

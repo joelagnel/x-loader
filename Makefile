@@ -225,8 +225,8 @@ overo_config :	unconfig
 omap3530beagle_config :    unconfig
 	@$(MKCONFIG) $(@:_config=) arm omap3 omap3530beagle
 
-igep0020_config :    unconfig
-	@$(MKCONFIG) $(@:_config=) arm omap3 igep0020
+igep00x0_config :    unconfig
+	@$(MKCONFIG) $(@:_config=) arm omap3 igep00x0
 	
 #########################################################################
 ## OMAP4 (ARM-CortexA9) Systems
