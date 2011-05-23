@@ -1080,7 +1080,7 @@ static const struct omap4panda_mux omap4panda_mux[] = {
 	{ OMAP44XX_CTRL_BASE + CP(FREF_CLK2_OUT),
 					       PTD | IEN | M3  /* gpio_182 */ },
 	{ OMAP44XX_CTRL_BASE + CP(SYS_NIRQ1), PTU | IEN | M0  /* sys_nirq1 */ },
-	{ OMAP44XX_CTRL_BASE + CP(SYS_NIRQ2), PTU | IEN | M0  /* sys_nirq2 */ },
+	{ OMAP44XX_CTRL_BASE + CP(SYS_NIRQ2), M7  /* sys_nirq2 */ },
 	{ OMAP44XX_CTRL_BASE + CP(SYS_BOOT0), PTU | IEN | M3  /* gpio_184 */ },
 	{ OMAP44XX_CTRL_BASE + CP(SYS_BOOT1), M3  /* gpio_185 */ },
 	{ OMAP44XX_CTRL_BASE + CP(SYS_BOOT2), PTD | IEN | M3  /* gpio_186 */ },
