@@ -232,7 +232,7 @@ igep0020_config :    unconfig
 ## OMAP4 (ARM-CortexA9) Systems
 #########################################################################
 omap4430panda_config :    unconfig
-	@./mkconfig $(@:_config=) arm omap4 omap4430panda 1
+	@$(MKCONFIG) $(@:_config=) arm omap4 omap4430panda 1
 
 #########################################################################
 
