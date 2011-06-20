@@ -800,7 +800,11 @@ do_fat_read(const char *filename, void *buffer, unsigned long maxsize,
 	   // FAT32 does not guarantee contiguous root directory
 	   curclus = get_fatent (mydata, curclus);
 	   cursect = (curclus * mydata->clust_size) + mydata->data_begin;
-
+	   if (curclus <= 0x0001 || curclus >= 0xfffff0) {
+		   FAT_DPRINT("curclust: 0x%x\n", curclus);
+		   FAT_ERROR("Invalid FAT entry\n");
+		   return -1;
+	   }
 	   FAT_DPRINT ("root clus %d sector %d\n", curclus, cursect);
 	}
     }
